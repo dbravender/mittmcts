@@ -1,5 +1,5 @@
 from collections import namedtuple
-from copy import deepcopy
+from copy import copy
 import unittest
 
 from mcts import MCTS
@@ -24,13 +24,16 @@ class GameWithOneMove(object):
     def apply_move(cls, state, move):
         if move != 'win':
             raise ValueError('Invalid move')
-        new_state = deepcopy(state)
-        new_state.winner = state.current_player
+        new_state = state._replace(winner=state.current_player)
         return new_state
 
     @classmethod
     def get_winner(cls, state):
         return state.winner
+
+    @classmethod
+    def current_player(cls, state):
+        return state.current_player
 
 
 class GameWithTwoMoves(object):
@@ -50,27 +53,39 @@ class GameWithTwoMoves(object):
     def apply_move(cls, state, move):
         if state.board[move] != 0:
             raise ValueError('Invalid move')
-        new_state = deepcopy(state)
-        if move == 0:
-            new_state._replace(winner=state.current_player)
-        new_state.current_player = state.current_player + 1
+        new_board = copy(state.board)
+        new_board[move] = state.current_player
+        new_state = state._replace(current_player=state.current_player + 1,
+                                   board=new_board)
+        if move == 1:
+            new_state = new_state._replace(winner=state.current_player)
         return new_state
 
     @classmethod
     def get_winner(cls, state):
         return state.winner
 
+    @classmethod
+    def current_player(cls, state):
+        return state.current_player
+
 
 class TestMCTS(unittest.TestCase):
     def test_game_with_one_move(self):
-        move, _ = MCTS(GameWithOneMove).get_move_and_root()
+        move, root = MCTS(GameWithOneMove).get_move_and_root(100)
         self.assertEqual(move, 'win')
-
-        mcts = MCTS(GameWithOneMove,
-                    initial_state=GameWithOneMove.State(winner=1,
-                                                        current_player=1))
-        self.assertIsNone(mcts.get_move_and_root().move)
+        self.assertEqual(root.children[0].wins_by_player[1], 100)
 
     def test_game_with_two_possible_moves(self):
-        move, _ = MCTS(GameWithTwoMoves).get_move_and_root()
-        self.assertEqual(move, 0)
+        move, root = MCTS(GameWithTwoMoves).get_move_and_root(100)
+        self.assertEqual(root.children[0].move, 0)
+        self.assertEqual(root.children[0].wins_by_player[1], 0)
+        self.assertIsNone(root.children[0].winner)
+        self.assertEqual(root.children[0].children[0].winner, 2)
+        self.assertEqual(root.children[0].children[0].wins_by_player,
+                         {2: root.children[0].children[0].visits})
+        self.assertEqual(root.children[1].move, 1)
+        self.assertEqual(root.children[1].winner, 1)
+        self.assertEqual(root.children[1].wins_by_player,
+                         {1: root.children[1].visits})
+        self.assertEqual(move, 1)
