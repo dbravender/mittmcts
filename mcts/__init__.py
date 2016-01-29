@@ -8,10 +8,11 @@ Draw = Draw()
 
 
 class Node(object):
-    def __init__(self, game, state, parent, move, c):
+    def __init__(self, game, state, parent, move, c, is_random=False):
         self.parent = parent
         self.__state = state
         self.__children = None
+        self.is_random = is_random
         self.game = game
         self.move = move
         self.visits = 0
@@ -24,8 +25,8 @@ class Node(object):
         wins_by_player = self.wins_by_player.get(player, 0)
         try:
             ucb = (
-             ((wins_by_player + (self.draws * 0.5)) / self.visits) +
-              (self.c * sqrt(log(self.parent.visits) / self.visits)))
+                ((wins_by_player + (self.draws * 0.5)) / self.visits) +
+                (self.c * sqrt(log(self.parent.visits) / self.visits)))
         except ZeroDivisionError:
             ucb = 0
         return ucb
@@ -43,12 +44,14 @@ class Node(object):
     @property
     def children(self):
         if self.__children is None:
+            is_random, moves = self.game.get_moves(self.state)
             self.__children = [Node(game=self.game,
                                     state=None,
                                     move=move,
+                                    is_random=is_random,
                                     parent=self,
                                     c=self.c)
-                             for move in self.game.get_moves(self.state)]
+                               for move in moves]
         return self.__children
 
     def get_best_child(self):

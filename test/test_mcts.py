@@ -16,9 +16,9 @@ class GameWithOneMove(object):
     @classmethod
     def get_moves(cls, state):
         if state.winner:
-            return []
+            return (False, [])
         else:
-            return ['win']
+            return (False, ['win'])
 
     @classmethod
     def apply_move(cls, state, move):
@@ -46,8 +46,8 @@ class GameWithTwoMoves(object):
 
     @classmethod
     def get_moves(cls, state):
-        return [position for position, player in enumerate(state.board)
-                if player == 0]
+        return (False, [position for position, player in enumerate(state.board)
+                        if player == 0])
 
     @classmethod
     def apply_move(cls, state, move):
