@@ -119,3 +119,45 @@ class SimpleDiceRollingGame(object):
     @classmethod
     def current_player(cls, state):
         return 1
+
+
+class TicTacToeGame(object):
+    State = namedtuple('TicTacToeState', 'board, current_player, winner')
+    winning_scores = [7, 56, 448, 73, 146, 292, 273, 84]
+
+    @classmethod
+    def initial_state(cls):
+        return cls.State(board=[None] * 9, current_player='X', winner=None)
+
+    @classmethod
+    def apply_move(cls, state, move):
+        new_board = copy(state.board)
+        if state.board[move]:
+            raise Exception('Already played there')
+        new_board[move] = state.current_player
+        next_player = state.current_player == 'X' and 'O' or 'X'
+        winner = None
+        for player in ['X', 'O']:
+            score = sum([2 ** i for i, spot in enumerate(new_board)
+                        if spot == player])
+            for winning_score in cls.winning_scores:
+                if winning_score & score == winning_score:
+                    winner = player
+        return cls.State(board=new_board,
+                         current_player=next_player,
+                         winner=winner)
+
+    @classmethod
+    def get_moves(cls, state):
+        if state.winner:
+            return (False, [])
+        return (False, [i for i, spot in enumerate(state.board)
+                        if spot is None])
+
+    @classmethod
+    def get_winner(cls, state):
+        return state.winner
+
+    @classmethod
+    def current_player(cls, state):
+        return state.current_player

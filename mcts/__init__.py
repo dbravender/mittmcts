@@ -3,11 +3,6 @@ from math import sqrt, log
 from random import choice, random
 
 
-class Draw(object):
-    pass
-Draw = Draw()
-
-
 class Node(object):
     def __init__(self, game, state, parent, move, c):
         self.parent = parent
@@ -97,7 +92,7 @@ class Node(object):
         current_node = self
         while current_node:
             current_node.visits += 1
-            if winner is Draw:
+            if winner is None:
                 current_node.draws += 1
             else:
                 current_node.wins_by_player[winner] += 1
@@ -108,8 +103,8 @@ class Node(object):
             self.state,
             self.move,
             self.visits,
-            self.wins_by_player[self.current_player],
-            self.ucb1(self.current_player))
+            self.wins_by_player[self.parent.current_player],
+            self.ucb1(self.parent.current_player))
 
 
 class MCTS(object):
@@ -132,7 +127,7 @@ class MCTS(object):
         while plays < iterations:
             current_node = root_node
             plays += 1
-            while current_node.winner is None:
+            while current_node.winner is None and current_node.children:
                 current_node = current_node.get_best_child()
             current_node.backprop()
         return MoveTree(root_node.most_visited_child.move, root_node)

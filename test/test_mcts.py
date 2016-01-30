@@ -2,7 +2,9 @@ import unittest
 
 from mock import patch
 
-from games import GameWithOneMove, GameWithTwoMoves, SimpleDiceRollingGame
+from games import (
+    GameWithOneMove, GameWithTwoMoves, SimpleDiceRollingGame, TicTacToeGame
+)
 from mcts import MCTS
 
 
@@ -48,3 +50,22 @@ class TestMCTS(unittest.TestCase):
             # every time it rolls two dice
             self.assertEqual(root.children[2].wins_by_player[1],
                              root.children[2].visits)
+
+    def test_selects_winning_tictactoe_move(self):
+        ___ = None
+        one_move_from_winning = TicTacToeGame.State(board=['O', 'O', ___,
+                                                           'X', ___, 'X',
+                                                           ___, 'X', ___],
+                                                    current_player='O',
+                                                    winner=None)
+        move, root = (MCTS(TicTacToeGame, one_move_from_winning)
+                      .get_move_and_root(100))
+        self.assertEqual(move, 2)
+        one_move_from_winning = TicTacToeGame.State(board=['O', ___, ___,
+                                                           'O', 'X', 'X',
+                                                           ___, 'X', ___],
+                                                    current_player='O',
+                                                    winner=None)
+        move, root = (MCTS(TicTacToeGame, one_move_from_winning)
+                      .get_move_and_root(100))
+        self.assertEqual(move, 6)
