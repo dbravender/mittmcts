@@ -3,6 +3,9 @@ from copy import copy
 
 
 class GameWithOneMove(object):
+    """An extremely silly game where you can choose to win or lose.
+    MCTS should choose to win this game every time"""
+
     State = namedtuple('GameWithOneMoveState',
                        'winner, current_player')
 
@@ -34,6 +37,10 @@ class GameWithOneMove(object):
 
 
 class GameWithTwoMoves(object):
+    """A game with two players where the first player can choose to win or
+    pass and then the next player has to choose to win if the first player
+    passed"""
+
     State = namedtuple('GameWithOneMoveState',
                        'board, winner, current_player')
 
@@ -68,6 +75,9 @@ class GameWithTwoMoves(object):
 
 
 class SimpleDiceRollingGame(object):
+    """A one-player game where the player chooses to roll 0, 1 or 2 dice and
+    rolls them. The player wins if they roll a total of 6 or above"""
+
     State = namedtuple('SimpleDiceRollingGameState',
                        'score, winner, round, dice_to_roll')
     die_roll_outcome = range(1, 7)
@@ -122,6 +132,8 @@ class SimpleDiceRollingGame(object):
 
 
 class TicTacToeGame(object):
+    """Standard tic-tac-toe game"""
+
     State = namedtuple('TicTacToeState', 'board, current_player, winner')
     winning_scores = [7, 56, 448, 73, 146, 292, 273, 84]
 
