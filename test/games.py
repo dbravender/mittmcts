@@ -108,23 +108,44 @@ class SimpleDiceRollingGame(object):
 
     @classmethod
     def apply_move(cls, state, move):
-        new_state = state
+        dice_to_roll = 0
+        score = 0
+        winner = None
+
         if state.round == 0:
-            new_state = new_state._replace(dice_to_roll=move)
+            dice_to_roll = move
 
         if state.round == 1:
-            new_state = new_state._replace(score=state.score + move)
-            if new_state.score > 5:
-                new_state = new_state._replace(winner=1)
+            score = move
+            if score > 5:
+                winner = 1
             else:
-                new_state = new_state._replace(winner=2)
+                winner = 2
 
-        new_state = new_state._replace(round=state.round + 1)
-        return new_state
+        return cls.State(dice_to_roll=dice_to_roll,
+                         score=score,
+                         winner=winner,
+                         round=state.round + 1)
 
     @classmethod
     def get_winner(cls, state):
         return state.winner
+
+    @classmethod
+    def update_misc(cls, end_node, misc_by_player):
+        if 'scores' not in misc_by_player[1]:
+            misc_by_player[1] = {
+                'scores': [],
+                'avg_score': 0,
+                'min_score': 0,
+                'max_score': 0,
+            }
+        misc = misc_by_player[1]
+        scores = misc['scores']
+        scores.append(end_node.score)
+        misc.update({'avg_score': sum(scores) / len(scores),
+                     'min_score': min(scores),
+                     'max_score': max(scores)})
 
     @classmethod
     def current_player(cls, state):

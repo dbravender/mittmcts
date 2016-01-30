@@ -38,6 +38,21 @@ class TestMCTS(unittest.TestCase):
             self.assertEqual(root.children[0].wins_by_player[1], 0)
             self.assertEqual(root.children[1].wins_by_player[1], 0)
             self.assertEqual(root.children[2].wins_by_player[1], 0)
+            self.assertEqual(root.misc_by_player[1]['min_score'], 0)
+            self.assertEqual(root.misc_by_player[1]['max_score'], 2)
+            self.assertEqual(root.misc_by_player[1]['avg_score'], 1)
+            self.assertEqual(root.children[1].misc_by_player[1]['min_score'],
+                             1)
+            self.assertEqual(root.children[1].misc_by_player[1]['max_score'],
+                             1)
+            self.assertEqual(root.children[1].misc_by_player[1]['avg_score'],
+                             1)
+            self.assertEqual(root.children[2].misc_by_player[1]['min_score'],
+                             2)
+            self.assertEqual(root.children[2].misc_by_player[1]['max_score'],
+                             2)
+            self.assertEqual(root.children[2].misc_by_player[1]['avg_score'],
+                             2)
             self.assertEqual(root.wins_by_player[1], 0)
 
         with patch('mcts.choice') as mock_choice:
@@ -50,6 +65,12 @@ class TestMCTS(unittest.TestCase):
             # every time it rolls two dice
             self.assertEqual(root.children[2].wins_by_player[1],
                              root.children[2].visits)
+            self.assertEqual(root.children[2].misc_by_player[1]['min_score'],
+                             12)
+            self.assertEqual(root.children[2].misc_by_player[1]['max_score'],
+                             12)
+            self.assertEqual(root.children[2].misc_by_player[1]['avg_score'],
+                             12)
 
     def test_selects_winning_tictactoe_move(self):
         ___ = None

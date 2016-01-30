@@ -13,7 +13,7 @@ class Node(object):
         self.visits = 0
         self.draws = 0
         self.wins_by_player = defaultdict(lambda: 0)
-        self.misc_by_player = defaultdict(lambda: 0)
+        self.misc_by_player = defaultdict(dict)
         self.c = c
 
     def ucb1(self, player):
@@ -90,12 +90,17 @@ class Node(object):
     def backprop(self):
         winner = self.winner
         current_node = self
+        update_misc = None
+        if hasattr(self.game, 'update_misc'):
+            update_misc = self.game.update_misc
         while current_node:
             current_node.visits += 1
             if winner is None:
                 current_node.draws += 1
             else:
                 current_node.wins_by_player[winner] += 1
+            if update_misc:
+                update_misc(self.state, current_node.misc_by_player)
             current_node = current_node.parent
 
     def __repr__(self):
