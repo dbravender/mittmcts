@@ -1,5 +1,6 @@
 from collections import defaultdict, namedtuple
 from math import sqrt, log
+from random import choice, random
 
 
 class Draw(object):
@@ -8,11 +9,10 @@ Draw = Draw()
 
 
 class Node(object):
-    def __init__(self, game, state, parent, move, c, is_random=False):
+    def __init__(self, game, state, parent, move, c):
         self.parent = parent
         self.__state = state
         self.__children = None
-        self.is_random = is_random
         self.game = game
         self.move = move
         self.visits = 0
@@ -22,6 +22,8 @@ class Node(object):
         self.c = c
 
     def ucb1(self, player):
+        if not self.parent:
+            return 0
         wins_by_player = self.wins_by_player.get(player, 0)
         try:
             ucb = (
@@ -45,26 +47,45 @@ class Node(object):
     def children(self):
         if self.__children is None:
             is_random, moves = self.game.get_moves(self.state)
+            self.is_random = is_random
             self.__children = [Node(game=self.game,
                                     state=None,
                                     move=move,
-                                    is_random=is_random,
                                     parent=self,
                                     c=self.c)
                                for move in moves]
         return self.__children
 
     def get_best_child(self):
-        player = self.game.current_player(self.state)
+        # force instantiation of child nodes and get self.is_random set
+        children = self.children
+        if self.is_random:
+            return choice(children)
+        player = self.current_player
         # visit unplayed moves first
         # if all moves have been visited then visit the move with the highest
         # ucb1 payout
-        children = sorted([(child.visits == 0, child.ucb1(player), child)
-                          for child in self.children])
+        children = sorted([(child.visits == 0 and random() or -1,
+                            child.ucb1(player), child)
+                          for child in children])
         if children:
             return children[-1][2]
         else:
             return None
+
+    @property
+    def current_player(self):
+        return self.game.current_player(self.state)
+
+    def dump_tree(self):
+        print(repr(self))
+        children = self.children
+        while children:
+            next_children = []
+            for child in children:
+                print(repr(child))
+                next_children.extend(child.children)
+            children = next_children
 
     @property
     def most_visited_child(self):
@@ -81,6 +102,14 @@ class Node(object):
             else:
                 current_node.wins_by_player[winner] += 1
             current_node = current_node.parent
+
+    def __repr__(self):
+        return 'state=%r move=%r visits=%r wins=%r ucb=%r' % (
+            self.state,
+            self.move,
+            self.visits,
+            self.wins_by_player[self.current_player],
+            self.ucb1(self.current_player))
 
 
 class MCTS(object):
