@@ -3,7 +3,7 @@ from copy import copy
 
 
 class GameWithOneMove(object):
-    """An extremely silly game where you can choose to win or lose.
+    """An extremely silly game where you can only choose to win.
     MCTS should choose to win this game every time"""
 
     State = namedtuple('GameWithOneMoveState',
@@ -24,8 +24,7 @@ class GameWithOneMove(object):
     def apply_move(cls, state, move):
         if move != 'win':
             raise ValueError('Invalid move')
-        new_state = state._replace(winner=state.current_player)
-        return new_state
+        return cls.State(winner=state.current_player, current_player=1)
 
     @classmethod
     def get_winner(cls, state):
@@ -55,15 +54,16 @@ class GameWithTwoMoves(object):
 
     @classmethod
     def apply_move(cls, state, move):
+        winner = None
+        new_board = copy(state.board)
         if state.board[move] != 0:
             raise ValueError('Invalid move')
-        new_board = copy(state.board)
         new_board[move] = state.current_player
-        new_state = state._replace(current_player=state.current_player + 1,
-                                   board=new_board)
         if move == 1:
-            new_state = new_state._replace(winner=state.current_player)
-        return new_state
+            winner = state.current_player
+        return cls.State(board=new_board,
+                         winner=winner,
+                         current_player=state.current_player + 1)
 
     @classmethod
     def get_winner(cls, state):
