@@ -78,6 +78,7 @@ class TestMCTS(unittest.TestCase):
                                                            'X', ___, 'X',
                                                            ___, 'X', ___],
                                                     current_player='O',
+                                                    draw=None,
                                                     winner=None)
         move, root = (MCTS(TicTacToeGame, one_move_from_winning)
                       .get_move_and_root(100))
@@ -86,6 +87,7 @@ class TestMCTS(unittest.TestCase):
                                                            'O', 'X', 'X',
                                                            ___, 'X', ___],
                                                     current_player='O',
+                                                    draw=None,
                                                     winner=None)
         move, root = (MCTS(TicTacToeGame, one_move_from_winning)
                       .get_move_and_root(100))

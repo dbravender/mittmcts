@@ -155,29 +155,37 @@ class SimpleDiceRollingGame(object):
 class TicTacToeGame(object):
     """Standard tic-tac-toe game"""
 
-    State = namedtuple('TicTacToeState', 'board, current_player, winner')
+    State = namedtuple('TicTacToeState', 'board, current_player, winner,'
+                                         'draw')
     winning_scores = [7, 56, 448, 73, 146, 292, 273, 84]
 
     @classmethod
     def initial_state(cls):
-        return cls.State(board=[None] * 9, current_player='X', winner=None)
+        return cls.State(board=[None] * 9,
+                         current_player='X',
+                         draw=None,
+                         winner=None)
 
     @classmethod
     def apply_move(cls, state, move):
         new_board = copy(state.board)
-        if state.board[move]:
-            raise Exception('Already played there')
+        if move not in range(9) or state.board[move]:
+            raise ValueError('Illegal move')
         new_board[move] = state.current_player
         next_player = state.current_player == 'X' and 'O' or 'X'
         winner = None
+        draw = None
         for player in ['X', 'O']:
             score = sum([2 ** i for i, spot in enumerate(new_board)
                         if spot == player])
             for winning_score in cls.winning_scores:
                 if winning_score & score == winning_score:
                     winner = player
+        if winner is None and len(filter(None, new_board)) == 9:
+            draw = True
         return cls.State(board=new_board,
                          current_player=next_player,
+                         draw=draw,
                          winner=winner)
 
     @classmethod
@@ -194,3 +202,9 @@ class TicTacToeGame(object):
     @classmethod
     def current_player(cls, state):
         return state.current_player
+
+    @classmethod
+    def print_board(cls, state):
+        print ''.join([((x and str(x) or str(i)) +
+                       ((i + 1) % 3 == 0 and '\n' or ' '))
+                       for i, x in enumerate(state.board)])
