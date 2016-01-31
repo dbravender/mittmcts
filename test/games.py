@@ -1,6 +1,8 @@
 from collections import namedtuple
 from copy import copy
 
+from mcts import ImpossibleState
+
 
 class GameWithOneMove(object):
     """An extremely silly game where you can only choose to win.
@@ -208,3 +210,23 @@ class TicTacToeGame(object):
         print ''.join([((x and str(x) or str(i)) +
                        ((i + 1) % 3 == 0 and '\n' or ' '))
                        for i, x in enumerate(state.board)])
+
+
+class GameWithImpossibleState(GameWithTwoMoves):
+    """A contrived game which has a state that when selected
+    raises an ImpossibleState exception which is used when
+    random options are doled out in such a way that a player
+    would need to cheat (like reneging in a card game)"""
+
+    State = namedtuple('GameWithImpossibleStateState',
+                       'board, winner, current_player')
+
+    @classmethod
+    def initial_state(cls):
+        return cls.State(board=[0, 0, 0], winner=None, current_player=1)
+
+    @classmethod
+    def apply_move(cls, state, move):
+        if move == 2:
+            raise ImpossibleState()
+        return GameWithTwoMoves.apply_move(state, move)

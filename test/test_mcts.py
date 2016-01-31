@@ -3,9 +3,10 @@ import unittest
 from mock import patch
 
 from games import (
-    GameWithOneMove, GameWithTwoMoves, SimpleDiceRollingGame, TicTacToeGame
+    GameWithOneMove, GameWithTwoMoves, SimpleDiceRollingGame, TicTacToeGame,
+    GameWithImpossibleState
 )
-from mcts import MCTS
+from mcts import MCTS, ImpossibleState
 
 
 class TestMCTS(unittest.TestCase):
@@ -92,3 +93,10 @@ class TestMCTS(unittest.TestCase):
         move, root = (MCTS(TicTacToeGame, one_move_from_winning)
                       .get_move_and_root(100))
         self.assertEqual(move, 6)
+
+    def test_ignores_impossible_states(self):
+        try:
+            move, root = MCTS(GameWithImpossibleState).get_move_and_root(100)
+        except ImpossibleState:
+            self.fail('Should not raise ImpossibleState')
+        self.assertEqual(root.children[2].visits, 0)
