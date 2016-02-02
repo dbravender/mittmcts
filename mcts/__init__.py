@@ -65,7 +65,8 @@ class Node(object):
         # if all moves have been visited then visit the move with the highest
         # ucb1 payout
         children = sorted([(child.visits == 0 and random() or -1,
-                            child.ucb1(player), child)
+                            child.ucb1(player),
+                            child)
                           for child in children])
         if children:
             return children[-1][2]
@@ -133,17 +134,17 @@ class MCTS(object):
                          move=None,
                          c=self.c)
         plays = 0
-        while plays < iterations:
+        impossible_states_in_a_row = 0
+        while plays < iterations and impossible_states_in_a_row < 200:
             current_node = root_node
             plays += 1
             try:
                 while current_node.winner is None and current_node.children:
                     current_node = current_node.get_best_child()
                 current_node.backprop()
+                impossible_states_in_a_row = 0
             except ImpossibleState:
-                # Intentionally letting plays increase even though we don't
-                # get any more information because there are states where the
-                # only plays left are ImpossibleStates
+                impossible_states_in_a_row += 1
                 continue
 
         return MoveTree(root_node.most_visited_child.move, root_node)
