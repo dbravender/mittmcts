@@ -4,7 +4,7 @@ from mock import patch
 
 from games import (
     GameWithOneMove, GameWithTwoMoves, SimpleDiceRollingGame, TicTacToeGame,
-    GameWithImpossibleState
+    GameWithImpossibleState, GameWithManyMovesOnlyOneDetermined
 )
 from mcts import MCTS, ImpossibleState
 
@@ -100,3 +100,10 @@ class TestMCTS(unittest.TestCase):
         except ImpossibleState:
             self.fail('Should not raise ImpossibleState')
         self.assertEqual(root.children[2].visits, 0)
+
+    def test_only_determined_moves_are_followed(self):
+        move, root = (MCTS(GameWithManyMovesOnlyOneDetermined)
+                      .get_move_and_root(100))
+        self.assertEqual(root.children[1].visits, 100)
+        # all the other options were instantiated
+        self.assertEqual(len(root.children), 5)

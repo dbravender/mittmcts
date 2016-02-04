@@ -18,6 +18,7 @@ class Node(object):
         self.draws = 0
         self.wins_by_player = defaultdict(lambda: 0)
         self.misc_by_player = defaultdict(dict)
+        self.determine = getattr(self.game, 'determine', None)
         self.c = c
 
     def ucb1(self, player):
@@ -61,6 +62,13 @@ class Node(object):
         if self.is_random:
             return choice(children)
         player = self.current_player
+        # if games implement a determine classmethod then we are doing ISMCTS
+        # so we randomly pick the hidden state every time we select a child
+        # node
+        if self.determine:
+            available_moves_in_this_state = self.determine(self.state)
+            children = [child for child in children
+                        if child.move in available_moves_in_this_state]
         # visit unplayed moves first
         # if all moves have been visited then visit the move with the highest
         # ucb1 payout

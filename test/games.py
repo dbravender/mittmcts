@@ -230,3 +230,15 @@ class GameWithImpossibleState(GameWithTwoMoves):
         if move == 2:
             raise ImpossibleState()
         return GameWithTwoMoves.apply_move(state, move)
+
+
+class GameWithManyMovesOnlyOneDetermined(GameWithTwoMoves):
+    @classmethod
+    def initial_state(cls):
+        return cls.State(board=[0, 0, 0, 0, 0], winner=None, current_player=1)
+
+    @classmethod
+    def determine(cls, state):
+        # we'll say only moving into the 2rd space is legal for this
+        # determination
+        return [1]
