@@ -38,10 +38,14 @@ class TestEuchre(unittest.TestCase):
                           'ad', 'kd', 'qd', 'jd', '0d', '9d'])
 
     def test_winning_card(self):
-        self.assertEqual(winning_card('c', 'c', ['jc', 'js', 'as', '0s']), 'jc')
-        self.assertEqual(winning_card('c', 'c', ['js', 'ac', 'jd', '0s']), 'js')
-        self.assertEqual(winning_card('d', 'c', ['jc', 'ac', '0s', '9s']), 'ac')
-        self.assertEqual(winning_card('d', 'c', ['9d', 'ac', '0s', '9s']), '9d')
+        self.assertEqual(winning_card('c', 'c', ['jc', 'js', 'as', '0s']),
+                         'jc')
+        self.assertEqual(winning_card('c', 'c', ['js', 'ac', 'jd', '0s']),
+                         'js')
+        self.assertEqual(winning_card('d', 'c', ['jc', 'ac', '0s', '9s']),
+                         'ac')
+        self.assertEqual(winning_card('d', 'c', ['9d', 'ac', '0s', '9s']),
+                         '9d')
 
     def test_playable_cards(self):
         self.assertEqual(playable_cards('c', 'd', deal()),
@@ -145,9 +149,7 @@ class TestEuchre(unittest.TestCase):
         self.assertEqual(EuchreGame.current_player(state), 0)
 
     def test_with_mcts(self):
-        state = EuchreGame.initial_state(['jh', 'ad', 'as', 'ac', '0c'], 'd')
-        move, root = MCTS(EuchreGame, state).get_move_and_root(10000)
-        print [x for x in root.children if x.move == move]
-        print
-        for x in root.children:
-            print x
+        state = EuchreGame.initial_state(['0d', '0h', 'as', 'ac', 'ah'], 'd')
+        move, root = MCTS(EuchreGame, state).get_move_and_root(1000)
+        print [x for x in root.children]
+        print move

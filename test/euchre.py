@@ -62,6 +62,7 @@ def sort_by_trump_and_lead(trump, lead_suit, cards):
                                  value(c)),
                   reverse=True)
 
+
 def winning_card(trump, lead_suit, cards):
     return sort_by_trump_and_lead(trump, lead_suit, cards)[0]
 
@@ -81,11 +82,11 @@ def playable_cards(trump, lead_suit, hand):
 
 
 def potential_cards_given_voids(trump, voids, cards):
-    """During the simulation we will distribute one card at a time to players
-    and track when they have played off on a certain lead. This function
-    returns the cards a player can select when they have played off on certain
-    suits and raises an ImpossibleState exception when there are no cards left
-    that they could legally play"""
+    """During the simulation we will distribute cards to players and track
+    when they have played off on a certain lead. This function returns the
+    cards a player can select when they have played off on certain suits and
+    raises an ImpossibleState exception when there are no cards left that they
+    could legally play"""
     cards = [card for card in cards if treated_suit(trump, card) not in voids]
     if not cards:
         raise ImpossibleState('No cards that can be played')
@@ -196,10 +197,21 @@ class EuchreGame(object):
         if state.current_player == 0:
             return (False, state.visible_hand)
         else:
-            playable_cards = potential_cards_given_voids(
+            return (False, potential_cards_given_voids(
                 state.trump, state.voids_by_player[state.current_player],
-                state.remaining_cards)
-            return (True, playable_cards)
+                state.remaining_cards))
+
+    @classmethod
+    def determine(cls, state):
+        # This could be made more efficient by properly detecting impossible
+        # distributions of cards sooner rather than waiting for
+        # potential_cards_given_voids to raise ImpossibleState later
+        cards_remaining_in_hand = 5 - sum(state.tricks_won_by_team)
+        if state.current_player == 0:
+            return state.visible_hand
+        return potential_cards_given_voids(
+            state.trump, state.voids_by_player[state.current_player],
+            state.remaining_cards)[:cards_remaining_in_hand]
 
     @classmethod
     def get_winner(cls, state):
