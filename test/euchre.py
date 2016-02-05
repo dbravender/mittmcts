@@ -2,7 +2,7 @@ from collections import namedtuple
 from copy import deepcopy
 from random import shuffle, choice
 
-from mcts import ImpossibleState
+from mittmcts import ImpossibleState
 
 
 team = {

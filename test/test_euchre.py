@@ -1,6 +1,6 @@
 import unittest
 
-from mcts import MCTS, ImpossibleState
+from mittmcts import MCTS, ImpossibleState
 
 from euchre import (
     second_highest_jack, winning_card, deal, sort_by_trump_and_lead,

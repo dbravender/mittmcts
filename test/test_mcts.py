@@ -6,7 +6,7 @@ from games import (
     GameWithOneMove, GameWithTwoMoves, SimpleDiceRollingGame, TicTacToeGame,
     GameWithImpossibleState, GameWithManyMovesOnlyOneDetermined
 )
-from mcts import MCTS, ImpossibleState
+from mittmcts import MCTS, ImpossibleState
 
 
 class TestMCTS(unittest.TestCase):
@@ -30,7 +30,7 @@ class TestMCTS(unittest.TestCase):
         self.assertEqual(move, 1)
 
     def test_random_moves_selected_randomly(self):
-        with patch('mcts.choice') as mock_choice:
+        with patch('mittmcts.choice') as mock_choice:
             # always choose the first item in random choices
             # (lowest die rolls in our silly game)
             mock_choice.side_effect = lambda items: items[0]
@@ -56,7 +56,7 @@ class TestMCTS(unittest.TestCase):
                              2)
             self.assertEqual(root.wins_by_player[1], 0)
 
-        with patch('mcts.choice') as mock_choice:
+        with patch('mittmcts.choice') as mock_choice:
             mock_choice.side_effect = lambda items: items[-1]
             move, root = MCTS(SimpleDiceRollingGame).get_move_and_root(100)
             # 100 simulations should be enough time for UCB1 to converge on

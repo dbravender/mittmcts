@@ -1,7 +1,7 @@
 from collections import namedtuple
 from copy import copy
 
-from mcts import ImpossibleState
+from mittmcts import ImpossibleState
 
 
 class GameWithOneMove(object):
