@@ -1,4 +1,4 @@
-from mcts import MCTS
+from mittmcts import MCTS
 from test.games import TicTacToeGame
 
 
