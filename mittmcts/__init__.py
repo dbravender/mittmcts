@@ -97,11 +97,9 @@ class Node(object):
 
     def most_visited_child(self, actual_options=None):
         children = self.children
-        print 'before: %r' % [x.move for x in children]
         if actual_options:
             children = [child for child in children
                         if child.move in actual_options]
-        print 'after: %r' % [x.move for x in children]
         return sorted([(child.visits, child)
                        for child in children])[-1][1]
 
@@ -150,11 +148,11 @@ class MCTS(object):
         impossible_states_in_a_row = 0
         while plays < iterations and impossible_states_in_a_row < 200:
             current_node = root_node
-            plays += 1
             try:
                 while current_node.winner is None and current_node.children:
                     current_node = current_node.get_best_child()
                 current_node.backprop()
+                plays += 1
                 impossible_states_in_a_row = 0
             except ImpossibleState:
                 impossible_states_in_a_row += 1
