@@ -95,10 +95,15 @@ class Node(object):
                 next_children.extend(child.children)
             children = next_children
 
-    @property
-    def most_visited_child(self):
+    def most_visited_child(self, actual_options=None):
+        children = self.children
+        print 'before: %r' % [x.move for x in children]
+        if actual_options:
+            children = [child for child in children
+                        if child.move in actual_options]
+        print 'after: %r' % [x.move for x in children]
         return sorted([(child.visits, child)
-                       for child in self.children])[-1][1]
+                       for child in children])[-1][1]
 
     def backprop(self):
         winner = self.winner
@@ -134,7 +139,7 @@ class MCTS(object):
         else:
             self.__initial_state = game.initial_state()
 
-    def get_move_and_root(self, iterations=1):
+    def get_move_and_root(self, iterations=1, actual_options=None):
         MoveTree = namedtuple('MoveTree', 'move, tree')
         root_node = Node(game=self.game,
                          parent=None,
@@ -155,4 +160,5 @@ class MCTS(object):
                 impossible_states_in_a_row += 1
                 continue
 
-        return MoveTree(root_node.most_visited_child.move, root_node)
+        return MoveTree(root_node.most_visited_child(actual_options).move,
+                        root_node)

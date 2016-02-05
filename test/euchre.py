@@ -50,7 +50,9 @@ def value(card):
 
 
 def suit(card):
-    return card[1]
+    if card is not None:
+        return card[1]
+    return None
 
 
 def sort_by_trump_and_lead(trump, lead_suit, cards):
@@ -145,24 +147,32 @@ class EuchreGame(object):
         if state.lead_card is None:
             lead_card = move
 
+        lead_suit = treated_suit(state.trump, lead_card)
+
         cards_played_by_player[state.current_player] = move
         if state.current_player == 0:
             visible_hand = deepcopy(state.visible_hand)
+            if (state.lead_card and move not in
+                    playable_cards(state.trump,
+                                   lead_suit,
+                                   visible_hand)):
+                raise ValueError('Cheating')
             visible_hand.remove(move)
         else:
             remaining_cards.remove(move)
 
-        if treated_suit(state.trump, lead_card) != suit(move):
+        if lead_suit != treated_suit(state.trump, move):
             voids_by_player = deepcopy(state.voids_by_player)
-            voids_by_player[state.current_player].add(suit(move))
+            voids_by_player[state.current_player].add(lead_suit)
 
         next_player = (state.current_player + 1) % 4
 
         number_of_cards_played = len(filter(None, cards_played_by_player))
 
         if number_of_cards_played == 4:
-            winner = winning_card(
-                state.trump, suit(state.lead_card), cards_played_by_player)
+            winner = winning_card(state.trump,
+                                  lead_suit,
+                                  cards_played_by_player)
             winning_player = cards_played_by_player.index(winner)
             tricks_won_by_team = deepcopy(tricks_won_by_team)
             winning_team = team[winning_player]
@@ -195,7 +205,10 @@ class EuchreGame(object):
     @classmethod
     def get_moves(cls, state):
         if state.current_player == 0:
-            return (False, state.visible_hand)
+            return (False,
+                    playable_cards(state.trump,
+                                   treated_suit(state.trump, state.lead_card),
+                                   state.visible_hand))
         else:
             return (False, potential_cards_given_voids(
                 state.trump, state.voids_by_player[state.current_player],
@@ -220,3 +233,13 @@ class EuchreGame(object):
     @classmethod
     def current_player(cls, state):
         return team[state.current_player]
+
+    @classmethod
+    def print_board(cls, state):
+        print 'lead_suit=%r trump=%r hand=%r' % (
+            state.lead_card and suit(state.lead_card) or '?',
+            state.trump,
+            state.visible_hand)
+        for player, card in enumerate(state.cards_played_by_player):
+            print '%d %s' % (player, card),
+        print
