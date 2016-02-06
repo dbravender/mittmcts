@@ -49,18 +49,12 @@ def value(card):
     }[card[0]]
 
 
-def suit(card):
-    if card is not None:
-        return card[1]
-    return None
-
-
 def sort_by_trump_and_lead(trump, lead_suit, cards):
     return sorted(cards,
                   key=lambda c: (c == jack_of_trump(trump),
                                  c == second_highest_jack(trump),
-                                 suit(c) == trump,
-                                 suit(c) == lead_suit,
+                                 suit(trump, c) == trump,
+                                 suit(trump, c) == lead_suit,
                                  value(c)),
                   reverse=True)
 
@@ -69,15 +63,16 @@ def winning_card(trump, lead_suit, cards):
     return sort_by_trump_and_lead(trump, lead_suit, cards)[0]
 
 
-def treated_suit(trump, card):
+def suit(trump, card):
     if card == second_highest_jack(trump):
         return trump
-    return suit(card)
+    if card is not None:
+        return card[1]
 
 
 def playable_cards(trump, lead_suit, hand):
     must_play = [card for card in hand
-                 if treated_suit(trump, card) == lead_suit]
+                 if suit(trump, card) == lead_suit]
     if must_play:
         return must_play
     return hand
@@ -89,7 +84,7 @@ def potential_cards_given_voids(trump, voids, cards):
     cards a player can select when they have played off on certain suits and
     raises an ImpossibleState exception when there are no cards left that they
     could legally play"""
-    cards = [card for card in cards if treated_suit(trump, card) not in voids]
+    cards = [card for card in cards if suit(trump, card) not in voids]
     if not cards:
         raise ImpossibleState('No cards that can be played')
     return cards
@@ -147,7 +142,7 @@ class EuchreGame(object):
         if state.lead_card is None:
             lead_card = move
 
-        lead_suit = treated_suit(state.trump, lead_card)
+        lead_suit = suit(state.trump, lead_card)
 
         cards_played_by_player[state.current_player] = move
         if state.current_player == 0:
@@ -161,7 +156,7 @@ class EuchreGame(object):
         else:
             remaining_cards.remove(move)
 
-        if lead_suit != treated_suit(state.trump, move):
+        if lead_suit != suit(state.trump, move):
             voids_by_player = deepcopy(state.voids_by_player)
             voids_by_player[state.current_player].add(lead_suit)
 
@@ -207,7 +202,7 @@ class EuchreGame(object):
         if state.current_player == 0:
             return (False,
                     playable_cards(state.trump,
-                                   treated_suit(state.trump, state.lead_card),
+                                   suit(state.trump, state.lead_card),
                                    state.visible_hand))
         else:
             return (False, potential_cards_given_voids(
@@ -237,7 +232,7 @@ class EuchreGame(object):
     @classmethod
     def print_board(cls, state):
         print 'lead_suit=%r trump=%r hand=%r' % (
-            state.lead_card and suit(state.lead_card) or '?',
+            state.lead_card and suit(state.trump, state.lead_card) or '?',
             state.trump,
             state.visible_hand)
         for player, card in enumerate(state.cards_played_by_player):

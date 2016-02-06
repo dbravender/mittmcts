@@ -4,7 +4,7 @@ from mittmcts import MCTS, ImpossibleState
 
 from euchre import (
     second_highest_jack, winning_card, deal, sort_by_trump_and_lead,
-    playable_cards, treated_suit, potential_cards_given_voids,
+    playable_cards, suit, potential_cards_given_voids,
     EuchreGame
 )
 
@@ -23,11 +23,11 @@ class TestEuchre(unittest.TestCase):
         self.assertEqual(second_highest_jack('d'), 'jh')
         self.assertEqual(second_highest_jack('h'), 'jd')
 
-    def treated_suit(self):
-        self.assertEqual(treated_suit('s', 'jc'), 's')
-        self.assertEqual(treated_suit('c', 'js'), 'c')
-        self.assertEqual(treated_suit('d', 'jh'), 'd')
-        self.assertEqual(treated_suit('h', 'jd'), 'h')
+    def test_suit(self):
+        self.assertEqual(suit('s', 'jc'), 's')
+        self.assertEqual(suit('c', 'js'), 'c')
+        self.assertEqual(suit('d', 'jh'), 'd')
+        self.assertEqual(suit('h', 'jd'), 'h')
 
     def test_sort_by_trump_and_lead(self):
         self.assertEqual(sort_by_trump_and_lead('d', 'h', deal())[:12],

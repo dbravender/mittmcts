@@ -1,7 +1,7 @@
 from copy import deepcopy
 
 from mittmcts import MCTS
-from test.euchre import EuchreGame, playable_cards, treated_suit
+from test.euchre import EuchreGame, playable_cards, suit
 
 
 def chunks(l, n):
@@ -43,8 +43,8 @@ def main():
                     print 'That is not a legal move'
         else:
             actual_options = playable_cards(state.trump,
-                                            treated_suit(state.trump,
-                                                         state.lead_card),
+                                            suit(state.trump,
+                                                 state.lead_card),
                                             hands[state.current_player - 1])
             move, root = (
                 MCTS(EuchreGame, state)
