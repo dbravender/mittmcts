@@ -29,7 +29,8 @@ def main():
             print 'ISMCTS chose >>%r<<' % move
             while True:
                 try:
-                    move = raw_input('Move (or l to list child nodes, s to show state):')
+                    move = raw_input('Move (or l to list child nodes, '
+                                     's to show state):')
                     if move == 'l':
                         for x in root.children:
                             print x

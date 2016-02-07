@@ -1,16 +1,16 @@
-from mittmcts import MCTS
+from mittmcts import MCTS, Draw
 from test.games import TicTacToeGame
 
 
 def main():
     state = TicTacToeGame.initial_state()
     while True:
-        if state.winner or state.draw:
+        if state.winner:
             TicTacToeGame.print_board(state)
-            if state.winner:
-                print state.winner + ' wins'
-            else:
+            if state.winner is Draw:
                 print 'Draw!'
+            elif state.winner:
+                print state.winner + ' wins'
             break
         if state.current_player == 'O':
             while True:

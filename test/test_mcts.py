@@ -4,9 +4,9 @@ from mock import patch
 
 from games import (
     GameWithOneMove, GameWithTwoMoves, SimpleDiceRollingGame, TicTacToeGame,
-    GameWithImpossibleState, GameWithManyMovesOnlyOneDetermined
+    GameWithManyMovesOnlyOneDetermined
 )
-from mittmcts import MCTS, ImpossibleState
+from mittmcts import MCTS, Draw
 
 
 class TestMCTS(unittest.TestCase):
@@ -79,7 +79,6 @@ class TestMCTS(unittest.TestCase):
                                                            'X', ___, 'X',
                                                            ___, 'X', ___],
                                                     current_player='O',
-                                                    draw=None,
                                                     winner=None)
         move, root = (MCTS(TicTacToeGame, one_move_from_winning)
                       .get_move_and_root(100))
@@ -88,18 +87,22 @@ class TestMCTS(unittest.TestCase):
                                                            'O', 'X', 'X',
                                                            ___, 'X', ___],
                                                     current_player='O',
-                                                    draw=None,
                                                     winner=None)
         move, root = (MCTS(TicTacToeGame, one_move_from_winning)
                       .get_move_and_root(100))
         self.assertEqual(move, 6)
 
-    def test_ignores_impossible_states(self):
-        try:
-            move, root = MCTS(GameWithImpossibleState).get_move_and_root(100)
-        except ImpossibleState:
-            self.fail('Should not raise ImpossibleState')
-        self.assertEqual(root.children[2].visits, 0)
+    def test_tictactoe_tie(self):
+        ___ = None
+        one_move_from_winning = TicTacToeGame.State(board=['O', 'X', ___,
+                                                           'X', 'O', 'O',
+                                                           'O', 'X', 'X'],
+                                                    current_player='X',
+                                                    winner=None)
+        move, root = (MCTS(TicTacToeGame, one_move_from_winning)
+                      .get_move_and_root(100))
+        self.assertEqual(move, 2)
+        self.assertEqual(root.children[0].winner, Draw)
 
     def test_only_determined_moves_are_followed(self):
         move, root = (MCTS(GameWithManyMovesOnlyOneDetermined)

@@ -2,8 +2,6 @@ from collections import namedtuple
 from copy import deepcopy
 from random import shuffle, choice
 
-from mittmcts import ImpossibleState
-
 
 team = {
     0: 0,
@@ -81,13 +79,8 @@ def playable_cards(trump, lead_suit, hand):
 def potential_cards_given_voids(trump, voids, cards):
     """During the simulation we will distribute cards to players and track
     when they have played off on a certain lead. This function returns the
-    cards a player can select when they have played off on certain suits and
-    raises an ImpossibleState exception when there are no cards left that they
-    could legally play"""
-    cards = [card for card in cards if suit(trump, card) not in voids]
-    if not cards:
-        raise ImpossibleState('No cards that can be played')
-    return cards
+    cards a player can select when they have played off on certain suits"""
+    return [card for card in cards if suit(trump, card) not in voids]
 
 
 class EuchreGame(object):
@@ -213,7 +206,7 @@ class EuchreGame(object):
     def determine(cls, state):
         # This could be made more efficient by properly detecting impossible
         # distributions of cards sooner rather than waiting for
-        # potential_cards_given_voids to raise ImpossibleState later
+        # potential_cards_given_voids to return no cards
         cards_remaining_in_hand = 5 - sum(state.tricks_won_by_team)
         if state.current_player == 0:
             return state.visible_hand

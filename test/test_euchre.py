@@ -1,6 +1,6 @@
 import unittest
 
-from mittmcts import MCTS, ImpossibleState
+from mittmcts import MCTS
 
 from euchre import (
     second_highest_jack, winning_card, deal, sort_by_trump_and_lead,
@@ -60,12 +60,8 @@ class TestEuchre(unittest.TestCase):
     def test_potential_cards_given_voids(self):
         self.assertEqual(
             potential_cards_given_voids('c', ['d'], ['jd', 'jc']), ['jc'])
-        try:
-            potential_cards_given_voids('d', ['d'], ['jd', 'jh'])
-            self.fail('Should raise an ImpossibleState when all cards are in '
-                      'a void suit')
-        except ImpossibleState:
-            pass
+        self.assertEqual(
+            potential_cards_given_voids('d', ['d'], ['jd', 'jh']), [])
 
     def test_initial_state(self):
         try:

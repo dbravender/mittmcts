@@ -3,6 +3,11 @@ from math import sqrt, log
 from random import choice, random
 
 
+class Draw(object):
+    pass
+Draw = Draw()
+
+
 class ImpossibleState(Exception):
     pass
 
@@ -19,6 +24,7 @@ class Node(object):
         self.wins_by_player = defaultdict(lambda: 0)
         self.misc_by_player = defaultdict(dict)
         self.determine = getattr(self.game, 'determine', None)
+        self.impossible_state = False
         self.c = c
 
     def ucb1(self, player):
@@ -68,7 +74,11 @@ class Node(object):
         if self.determine:
             available_moves_in_this_state = self.determine(self.state)
             children = [child for child in children
-                        if child.move in available_moves_in_this_state]
+                        if (child.move in available_moves_in_this_state
+                            and child.impossible_state is False)]
+            if not children and not self.winner:
+                self.impossible_state = True
+                raise ImpossibleState()
         # visit unplayed moves first
         # if all moves have been visited then visit the move with the highest
         # ucb1 payout
@@ -111,7 +121,7 @@ class Node(object):
             update_misc = self.game.update_misc
         while current_node:
             current_node.visits += 1
-            if winner is None:
+            if winner is Draw:
                 current_node.draws += 1
             else:
                 current_node.wins_by_player[winner] += 1
@@ -145,17 +155,14 @@ class MCTS(object):
                          move=None,
                          c=self.c)
         plays = 0
-        impossible_states_in_a_row = 0
-        while plays < iterations and impossible_states_in_a_row < 200:
+        while plays < iterations:
             current_node = root_node
             try:
                 while current_node.winner is None and current_node.children:
                     current_node = current_node.get_best_child()
                 current_node.backprop()
                 plays += 1
-                impossible_states_in_a_row = 0
             except ImpossibleState:
-                impossible_states_in_a_row += 1
                 continue
 
         return MoveTree(root_node.most_visited_child(actual_options).move,

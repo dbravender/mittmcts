@@ -1,7 +1,7 @@
 from collections import namedtuple
 from copy import copy
 
-from mittmcts import ImpossibleState
+from mittmcts import Draw
 
 
 class GameWithOneMove(object):
@@ -157,15 +157,13 @@ class SimpleDiceRollingGame(object):
 class TicTacToeGame(object):
     """Standard tic-tac-toe game"""
 
-    State = namedtuple('TicTacToeState', 'board, current_player, winner,'
-                                         'draw')
+    State = namedtuple('TicTacToeState', 'board, current_player, winner')
     winning_scores = [7, 56, 448, 73, 146, 292, 273, 84]
 
     @classmethod
     def initial_state(cls):
         return cls.State(board=[None] * 9,
                          current_player='X',
-                         draw=None,
                          winner=None)
 
     @classmethod
@@ -176,7 +174,6 @@ class TicTacToeGame(object):
         new_board[move] = state.current_player
         next_player = state.current_player == 'X' and 'O' or 'X'
         winner = None
-        draw = None
         for player in ['X', 'O']:
             score = sum([2 ** i for i, spot in enumerate(new_board)
                         if spot == player])
@@ -184,10 +181,9 @@ class TicTacToeGame(object):
                 if winning_score & score == winning_score:
                     winner = player
         if winner is None and len(filter(None, new_board)) == 9:
-            draw = True
+            winner = Draw
         return cls.State(board=new_board,
                          current_player=next_player,
-                         draw=draw,
                          winner=winner)
 
     @classmethod
@@ -210,26 +206,6 @@ class TicTacToeGame(object):
         print ''.join([((x and str(x) or str(i)) +
                        ((i + 1) % 3 == 0 and '\n' or ' '))
                        for i, x in enumerate(state.board)])
-
-
-class GameWithImpossibleState(GameWithTwoMoves):
-    """A contrived game which has a state that when selected
-    raises an ImpossibleState exception which is used when
-    random options are doled out in such a way that a player
-    would need to cheat (like reneging in a card game)"""
-
-    State = namedtuple('GameWithImpossibleStateState',
-                       'board, winner, current_player')
-
-    @classmethod
-    def initial_state(cls):
-        return cls.State(board=[0, 0, 0], winner=None, current_player=1)
-
-    @classmethod
-    def apply_move(cls, state, move):
-        if move == 2:
-            raise ImpossibleState()
-        return GameWithTwoMoves.apply_move(state, move)
 
 
 class GameWithManyMovesOnlyOneDetermined(GameWithTwoMoves):
