@@ -149,3 +149,19 @@ class TestEuchre(unittest.TestCase):
         move, root = MCTS(EuchreGame, state).get_move_and_root(1000)
         print [x for x in root.children]
         print move
+
+    def test_why_are_we_not_evaluating_all_potential_determinizations(self):
+        state = EuchreGame.State(
+            cards_played_by_player=[None, None, None, None],
+            current_player=0,
+            lead_card=None,
+            trump='c',
+            winning_team=None,
+            visible_hand=['qs', 'qh'],
+            remaining_cards=['0s', 'kd', 'js', 'ks', 'as', 'qd', 'jd', '9s', '0h', 'jc'],
+            tricks_won_by_team=[1, 2],
+            voids_by_player=[set(['d']), set([]), set([]), set([])])
+        move, root = MCTS(EuchreGame, state).get_move_and_root(1000)
+        for child in root.children:
+            for grandchild in child.children:
+                self.assertTrue(grandchild.visits > 0)

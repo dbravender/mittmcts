@@ -209,10 +209,16 @@ class EuchreGame(object):
         # potential_cards_given_voids to return no cards
         cards_remaining_in_hand = 5 - sum(state.tricks_won_by_team)
         if state.current_player == 0:
+            # technically this is cheating since we are letting our partner
+            # only consider moves with the cards that we have in our hand
+            # a fairer way to do this would be to determine the first
+            # player's hand when their partner is deciding what to do
             return state.visible_hand
-        return potential_cards_given_voids(
+        cards = potential_cards_given_voids(
             state.trump, state.voids_by_player[state.current_player],
-            state.remaining_cards)[:cards_remaining_in_hand]
+            state.remaining_cards)
+        shuffle(cards)
+        return cards[:cards_remaining_in_hand]
 
     @classmethod
     def get_winner(cls, state):
