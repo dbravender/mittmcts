@@ -17,9 +17,9 @@ The mascot of this project is [the Turk](https://en.wikipedia.org/wiki/The_Turk)
 Implement a class with the following classmethods:
 
 * `initial_state()` - returns the initial state of a game
-* `apply_move(state, move)` - returns a copy of state with the move applied - you are responsible for ensuring that there is no structural sharing here so you can efficiently reuse data that didn't change
+* `apply_move(state, move)` - returns a copy of state with the move applied - you are responsible for ensuring that if there is structural sharing it is done in a way that mutable changes to game state don't accidentally affect other nodes (when in doubt deepcopy the whole state - if you want to optimize for memory you only need to copy parts of the state that changed)
 * `get_moves(state)` - return a list of moves (that are passed back into apply_move when they are selected)
-* `get_winner(state)` - returns `None` if no one won or the player that won
+* `get_winner(state)` - returns `None` if no one won, the player that won or `Draw` if there was a tie
 * `current_player(state)` - returns the current player
 
 Optional methods:
