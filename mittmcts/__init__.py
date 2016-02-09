@@ -1,4 +1,4 @@
-from collections import defaultdict, namedtuple
+from collections import defaultdict
 from math import sqrt, log
 from random import choice, random
 
@@ -76,7 +76,7 @@ class Node(object):
             children = [child for child in children
                         if (child.move in available_moves_in_this_state
                             and child.impossible_state is False)]
-            if not children and not self.winner:
+            if not children and self.winner is None:
                 self.impossible_state = True
                 raise ImpossibleState()
         # visit unplayed moves first
@@ -147,23 +147,32 @@ class MCTS(object):
         else:
             self.__initial_state = game.initial_state()
 
-    def get_move_and_root(self, iterations=1, actual_options=None):
-        MoveTree = namedtuple('MoveTree', 'move, tree')
+    def get_move_and_root(self,
+                          iterations=1,
+                          actual_options=None,
+                          get_leaf_nodes=False):
         root_node = Node(game=self.game,
                          parent=None,
                          state=self.__initial_state,
                          move=None,
                          c=self.c)
         plays = 0
+        leaf_nodes = []
         while plays < iterations:
             current_node = root_node
             try:
                 while current_node.winner is None and current_node.children:
                     current_node = current_node.get_best_child()
-                current_node.backprop()
-                plays += 1
+                if current_node.winner is not None:
+                    current_node.backprop()
+                    plays += 1
+                    if get_leaf_nodes:
+                            leaf_nodes.append(current_node)
             except ImpossibleState:
                 continue
 
-        return MoveTree(root_node.most_visited_child(actual_options).move,
-                        root_node)
+        move = root_node.most_visited_child(actual_options).move
+        if get_leaf_nodes:
+            return (move, root_node, leaf_nodes)
+        else:
+            return (move, root_node)

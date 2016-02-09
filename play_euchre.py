@@ -25,7 +25,7 @@ def main():
         if state.current_player == 0:
             move, root = (
                 MCTS(EuchreGame, state)
-                .get_move_and_root(1000))
+                .get_move_and_root(100))
             print 'ISMCTS chose >>%r<<' % move
             while True:
                 try:

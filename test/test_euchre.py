@@ -146,7 +146,7 @@ class TestEuchre(unittest.TestCase):
 
     def test_with_mcts(self):
         state = EuchreGame.initial_state(['0d', '0h', 'as', 'ac', 'ah'], 'd')
-        move, root = MCTS(EuchreGame, state).get_move_and_root(1000)
+        move, root = MCTS(EuchreGame, state).get_move_and_root(100)
         print [x for x in root.children]
         print move
 
@@ -158,10 +158,28 @@ class TestEuchre(unittest.TestCase):
             trump='c',
             winning_team=None,
             visible_hand=['qs', 'qh'],
-            remaining_cards=['0s', 'kd', 'js', 'ks', 'as', 'qd', 'jd', '9s', '0h', 'jc'],
+            remaining_cards=['0s', 'kd', 'js', 'ks', 'as',
+                             'qd', 'jd', '9s', '0h', 'jc'],
             tricks_won_by_team=[1, 2],
             voids_by_player=[set(['d']), set([]), set([]), set([])])
-        move, root = MCTS(EuchreGame, state).get_move_and_root(1000)
+        move, root = MCTS(EuchreGame, state).get_move_and_root(100)
         for child in root.children:
             for grandchild in child.children:
                 self.assertTrue(grandchild.visits > 0)
+
+    def test_this_hand_should_win_every_time(self):
+        state = EuchreGame.State(
+            cards_played_by_player=[None, None, None, None],
+            current_player=0,
+            lead_card=None,
+            trump='d',
+            winning_team=None,
+            visible_hand=['qc', 'jh', 'jd', '9s'],
+            remaining_cards=['9h', 'qs', 'kh', 'ad', '0s', 'ah', 'kd', '9d',
+                             'js', 'ks', 'as', 'qd', '0d', 'qh', '0h', 'jc'],
+            tricks_won_by_team=[1, 0],
+            voids_by_player=[set([]), set([]), set([]), set([])])
+        move, root, leaf_nodes = (MCTS(EuchreGame, state)
+                                  .get_move_and_root(100, get_leaf_nodes=True))
+        for node in leaf_nodes:
+            self.assertGreaterEqual(node.state.tricks_won_by_team[0], 3)
