@@ -146,9 +146,9 @@ class TestEuchre(unittest.TestCase):
 
     def test_with_mcts(self):
         state = EuchreGame.initial_state(['0d', '0h', 'as', 'ac', 'ah'], 'd')
-        move, root = MCTS(EuchreGame, state).get_move_and_root(100)
-        print [x for x in root.children]
-        print move
+        result = MCTS(EuchreGame, state).get_simulation_result(100)
+        print [x for x in result.root.children]
+        print result.move
 
     def test_why_are_we_not_evaluating_all_potential_determinizations(self):
         state = EuchreGame.State(
@@ -162,8 +162,8 @@ class TestEuchre(unittest.TestCase):
                              'qd', 'jd', '9s', '0h', 'jc'],
             tricks_won_by_team=[1, 2],
             voids_by_player=[set(['d']), set([]), set([]), set([])])
-        move, root = MCTS(EuchreGame, state).get_move_and_root(100)
-        for child in root.children:
+        result = MCTS(EuchreGame, state).get_simulation_result(100)
+        for child in result.root.children:
             for grandchild in child.children:
                 self.assertTrue(grandchild.visits > 0)
 
@@ -179,7 +179,7 @@ class TestEuchre(unittest.TestCase):
                              'js', 'ks', 'as', 'qd', '0d', 'qh', '0h', 'jc'],
             tricks_won_by_team=[1, 0],
             voids_by_player=[set([]), set([]), set([]), set([])])
-        move, root, leaf_nodes = (MCTS(EuchreGame, state)
-                                  .get_move_and_root(100, get_leaf_nodes=True))
-        for node in leaf_nodes:
+        result = (MCTS(EuchreGame, state)
+                  .get_simulation_result(100, get_leaf_nodes=True))
+        for node in result.leaf_nodes:
             self.assertGreaterEqual(node.state.tricks_won_by_team[0], 3)

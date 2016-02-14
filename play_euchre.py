@@ -23,16 +23,16 @@ def main():
             print state
             break
         if state.current_player == 0:
-            move, root = (
+            result = (
                 MCTS(EuchreGame, state)
-                .get_move_and_root(100))
-            print 'ISMCTS chose >>%r<<' % move
+                .get_simulation_result(1000))
+            print 'ISMCTS chose >>%r<<' % result.move
             while True:
                 try:
                     move = raw_input('Move (or l to list child nodes, '
                                      's to show state):')
                     if move == 'l':
-                        for x in root.children:
+                        for x in result.root.children:
                             print x
                         continue
                     if move == 's':
@@ -47,13 +47,13 @@ def main():
                                             suit(state.trump,
                                                  state.lead_card),
                                             hands[state.current_player - 1])
-            move, root = (
+            result = (
                 MCTS(EuchreGame, state)
-                .get_move_and_root(1000,
-                                   actual_options))
-            print move
-            hands[state.current_player - 1].remove(move)
-            state = EuchreGame.apply_move(state, move)
+                .get_simulation_result(1000,
+                                       actual_options))
+            print result.move
+            hands[state.current_player - 1].remove(result.move)
+            state = EuchreGame.apply_move(state, result.move)
             EuchreGame.print_board(state)
 
 

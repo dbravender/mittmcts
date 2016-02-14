@@ -22,9 +22,9 @@ def main():
                 except ValueError:
                     print 'That is not a legal move'
         else:
-            move, root = (MCTS(TicTacToeGame, state)
-                          .get_move_and_root(100))
-            state = TicTacToeGame.apply_move(state, move)
+            result = (MCTS(TicTacToeGame, state)
+                      .get_simulation_result(100))
+            state = TicTacToeGame.apply_move(state, result.move)
 
 
 if __name__ == '__main__':

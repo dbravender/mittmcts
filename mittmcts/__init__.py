@@ -1,4 +1,4 @@
-from collections import defaultdict
+from collections import defaultdict, namedtuple
 from math import sqrt, log
 from random import choice, random
 
@@ -147,15 +147,16 @@ class MCTS(object):
         else:
             self.__initial_state = game.initial_state()
 
-    def get_move_and_root(self,
-                          iterations=1,
-                          actual_options=None,
-                          get_leaf_nodes=False):
+    def get_simulation_result(self,
+                              iterations=1,
+                              actual_options=None,
+                              get_leaf_nodes=False):
         root_node = Node(game=self.game,
                          parent=None,
                          state=self.__initial_state,
                          move=None,
                          c=self.c)
+        MCTSResult = namedtuple('MCTSResult', 'root, move, leaf_nodes')
         plays = 0
         leaf_nodes = []
         while plays < iterations:
@@ -172,7 +173,6 @@ class MCTS(object):
                 continue
 
         move = root_node.most_visited_child(actual_options).move
-        if get_leaf_nodes:
-            return (move, root_node, leaf_nodes)
-        else:
-            return (move, root_node)
+        return MCTSResult(root=root_node,
+                          move=move,
+                          leaf_nodes=leaf_nodes)
