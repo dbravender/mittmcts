@@ -8,11 +8,14 @@ The mascot of this project is [the Turk](https://en.wikipedia.org/wiki/The_Turk)
 <img src="/the-turk.jpg">
 </p>
 
-## Goal
+## Features
 
-* Implement MCTS/ISMCTS as simple as possible so others can see how it works
+* An easy-to-understand simple implementation of MCTS/ISMCTS so others can see how it works
+* Aid board game designers by giving them information about their games that make the game match their criteria of a fun game e.g.:
+  * tree depth report - how many moves on average does a game take to complete - is my game too long or short?
+  * custom evaluation functions so other metrics can be tracked
 
-## HOWTO Add a game
+## How to add a game
 
 Implement a class with the following classmethods:
 
@@ -29,9 +32,8 @@ Optional methods:
 
 ## Future
 
-* Aid board game designers by giving them information about their games that make the game match their criteria of a fun game e.g.:
-  * lead changes - the more often this happens the more engaged players are
+* More aids for board game designers:
+  * lead changes - presumably the more often this happens the more engaged players are
   * is there a dominant strategy that always seems to win or do a variety of strategies win? (could be determined by counting occurrences of certain moves or abilities that players collected in leaf nodes)
   * should a particular ability be nerfed or made non-exclusive (i.e. if players end up with it do they win most games)?
   * branching factor report - can help with analysis paralysis detection - does my game offer too many choices to players on every turn?
-  * tree depth report - how many moves on average does a game take to complete - is my game too long or short?
