@@ -145,7 +145,7 @@ class SimpleDiceRollingGame(object):
         misc = misc_by_player[1]
         scores = misc['scores']
         scores.append(end_node.score)
-        misc.update({'avg_score': sum(scores) / len(scores),
+        misc.update({'avg_score': float(sum(scores)) / len(scores),
                      'min_score': min(scores),
                      'max_score': max(scores)})
 

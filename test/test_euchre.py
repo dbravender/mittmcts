@@ -147,8 +147,10 @@ class TestEuchre(unittest.TestCase):
     def test_with_mcts(self):
         state = EuchreGame.initial_state(['0d', '0h', 'as', 'ac', 'ah'], 'd')
         result = MCTS(EuchreGame, state).get_simulation_result(100)
-        print [x for x in result.root.children]
-        print result.move
+        self.assertEqual(result.max_depth, 20)
+        # there is no longer option now so all players playing will always
+        # result in 20 cards being played
+        self.assertEqual(result.avg_depth, 20)
 
     def test_why_are_we_not_evaluating_all_potential_determinizations(self):
         state = EuchreGame.State(

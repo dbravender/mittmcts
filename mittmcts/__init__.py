@@ -13,7 +13,7 @@ class ImpossibleState(Exception):
 
 
 class Node(object):
-    def __init__(self, game, state, parent, move, c):
+    def __init__(self, game, state, parent, move, c, depth=0):
         self.parent = parent
         self.__state = state
         self.__children = None
@@ -26,6 +26,7 @@ class Node(object):
         self.determine = getattr(self.game, 'determine', None)
         self.impossible_state = False
         self.c = c
+        self.depth = depth
 
     def ucb1(self, player):
         if not self.parent:
@@ -58,7 +59,8 @@ class Node(object):
                                     state=None,
                                     move=move,
                                     parent=self,
-                                    c=self.c)
+                                    c=self.c,
+                                    depth=self.depth + 1)
                                for move in moves]
         return self.__children
 
@@ -156,8 +158,11 @@ class MCTS(object):
                          state=self.__initial_state,
                          move=None,
                          c=self.c)
-        MCTSResult = namedtuple('MCTSResult', 'root, move, leaf_nodes')
+        MCTSResult = namedtuple('MCTSResult', 'root, move, leaf_nodes,'
+                                              'max_depth, avg_depth')
         plays = 0
+        max_depth = 0
+        total_depth = 0
         leaf_nodes = []
         while plays < iterations:
             current_node = root_node
@@ -166,6 +171,8 @@ class MCTS(object):
                     current_node = current_node.get_best_child()
                 if current_node.winner is not None:
                     current_node.backprop()
+                    max_depth = max(max_depth, current_node.depth)
+                    total_depth += current_node.depth
                     plays += 1
                     if get_leaf_nodes:
                             leaf_nodes.append(current_node)
@@ -175,4 +182,6 @@ class MCTS(object):
         move = root_node.most_visited_child(actual_options).move
         return MCTSResult(root=root_node,
                           move=move,
-                          leaf_nodes=leaf_nodes)
+                          leaf_nodes=leaf_nodes,
+                          avg_depth=float(total_depth) / plays,
+                          max_depth=max_depth)

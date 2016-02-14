@@ -14,6 +14,7 @@ class TestMCTS(unittest.TestCase):
         result = MCTS(GameWithOneMove).get_simulation_result(100)
         self.assertEqual(result.move, 'win')
         self.assertEqual(result.root.children[0].wins_by_player[1], 100)
+        self.assertEqual(result.max_depth, 1)
 
     def test_game_with_two_possible_moves(self):
         result = MCTS(GameWithTwoMoves).get_simulation_result(100)
@@ -28,6 +29,8 @@ class TestMCTS(unittest.TestCase):
         self.assertEqual(result.root.children[1].wins_by_player,
                          {1: result.root.children[1].visits})
         self.assertEqual(result.move, 1)
+        self.assertEqual(result.max_depth, 2)
+        self.assertEqual(result.avg_depth, 1.06)
 
     def test_random_moves_selected_randomly(self):
         with patch('mittmcts.choice') as mock_choice:
@@ -41,24 +44,17 @@ class TestMCTS(unittest.TestCase):
             self.assertEqual(result.root.children[2].wins_by_player[1], 0)
             self.assertEqual(result.root.misc_by_player[1]['min_score'], 0)
             self.assertEqual(result.root.misc_by_player[1]['max_score'], 2)
-            self.assertEqual(result.root.misc_by_player[1]['avg_score'], 1)
             self.assertEqual(result.root.children[1]
                              .misc_by_player[1]['min_score'],
                              1)
             self.assertEqual(result.root.children[1]
                              .misc_by_player[1]['max_score'],
                              1)
-            self.assertEqual(result.root.children[1]
-                             .misc_by_player[1]['avg_score'],
-                             1)
             self.assertEqual(result.root.children[2]
                              .misc_by_player[1]['min_score'],
                              2)
             self.assertEqual(result.root.children[2]
                              .misc_by_player[1]['max_score'],
-                             2)
-            self.assertEqual(result.root.children[2]
-                             .misc_by_player[1]['avg_score'],
                              2)
             self.assertEqual(result.root.wins_by_player[1], 0)
 
