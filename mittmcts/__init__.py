@@ -1,4 +1,4 @@
-from collections import defaultdict, namedtuple
+from collections import defaultdict, namedtuple, Counter
 from math import sqrt, log
 from random import choice, random
 
@@ -183,3 +183,33 @@ class MCTS(object):
                           leaf_nodes=leaf_nodes,
                           avg_depth=float(total_depth) / plays,
                           max_depth=max_depth)
+
+
+def flamegraph(mcts_result, depth=None):
+    root_node = mcts_result.root
+    leaf_nodes = mcts_result.leaf_nodes
+    walks = Counter()
+    current_player = root_node.current_player
+    for node in leaf_nodes:
+        moves = []
+        while node:
+            extra = ''
+            if node == root_node:
+                break
+            else:
+                move = node.move
+            if node.parent.current_player != current_player:
+                extra = '-opp'
+            if node.winner == Draw:
+                moves.insert(0, '{}-draw'.format(current_player))
+            elif node.winner == current_player:
+                moves.insert(0, '{}-win'.format(current_player))
+            elif node.winner is not None:
+                moves.insert(0, '{}-lose'.format(current_player))
+            moves.insert(0, str(move) + extra)
+            node = node.parent
+        if depth is not None:
+            moves = moves[:depth]
+        walks[';'.join(moves)] += 1
+    for path, count in walks.iteritems():
+        print('{} {}'.format(path, count))
