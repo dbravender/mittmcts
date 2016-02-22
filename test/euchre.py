@@ -1,5 +1,4 @@
 from collections import namedtuple
-from copy import deepcopy
 from random import shuffle, choice
 
 
@@ -125,9 +124,9 @@ class EuchreGame(object):
 
     @classmethod
     def apply_move(cls, state, move):
-        cards_played_by_player = deepcopy(state.cards_played_by_player)
+        cards_played_by_player = state.cards_played_by_player[:]
         voids_by_player = state.voids_by_player
-        remaining_cards = deepcopy(state.remaining_cards)
+        remaining_cards = state.remaining_cards[:]
         visible_hand = state.visible_hand
         tricks_won_by_team = state.tricks_won_by_team
         lead_card = state.lead_card
@@ -139,7 +138,7 @@ class EuchreGame(object):
 
         cards_played_by_player[state.current_player] = move
         if state.current_player == 0:
-            visible_hand = deepcopy(state.visible_hand)
+            visible_hand = state.visible_hand[:]
             if (state.lead_card and move not in
                     playable_cards(state.trump,
                                    lead_suit,
@@ -150,7 +149,7 @@ class EuchreGame(object):
             remaining_cards.remove(move)
 
         if lead_suit != suit(state.trump, move):
-            voids_by_player = deepcopy(state.voids_by_player)
+            voids_by_player = [set(x) for x in state.voids_by_player]
             voids_by_player[state.current_player].add(lead_suit)
 
         next_player = (state.current_player + 1) % 4
@@ -162,7 +161,7 @@ class EuchreGame(object):
                                   lead_suit,
                                   cards_played_by_player)
             winning_player = cards_played_by_player.index(winner)
-            tricks_won_by_team = deepcopy(tricks_won_by_team)
+            tricks_won_by_team = tricks_won_by_team[:]
             winning_team = team[winning_player]
             tricks_won_by_team[winning_team] = (
                 tricks_won_by_team[winning_team] + 1)

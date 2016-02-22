@@ -164,7 +164,7 @@ class TestEuchre(unittest.TestCase):
                              'qd', 'jd', '9s', '0h', 'jc'],
             tricks_won_by_team=[1, 2],
             voids_by_player=[set(['d']), set([]), set([]), set([])])
-        result = MCTS(EuchreGame, state).get_simulation_result(100)
+        result = MCTS(EuchreGame, state).get_simulation_result(1000)
         for child in result.root.children:
             for grandchild in child.children:
                 self.assertTrue(grandchild.visits > 0)
