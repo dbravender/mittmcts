@@ -78,7 +78,7 @@ class GameWithTwoMoves(object):
 
 class SimpleDiceRollingGame(object):
     """A one-player game where the player chooses to roll 0, 1 or 2 dice and
-    rolls them. The player wins if they roll a total of 6 or above"""
+    rolls them. The player wins if they roll a total greater than 6"""
 
     State = namedtuple('SimpleDiceRollingGameState',
                        'score, winner, round, dice_to_roll')
@@ -119,7 +119,7 @@ class SimpleDiceRollingGame(object):
 
         if state.round == 1:
             score = move
-            if score > 5:
+            if score > 6:
                 winner = 1
             else:
                 winner = 2
