@@ -84,14 +84,13 @@ class Node(object):
         # visit unplayed moves first
         # if all moves have been visited then visit the move with the highest
         # ucb1 payout
-        children = sorted([(child.visits == 0 and random() or -1,
-                            child.ucb1(player),
-                            child)
-                          for child in children])
-        if children:
-            return children[-1][2]
-        else:
+        if not children:
             return None
+
+        children = sorted(children,
+                          key=lambda c: (c.visits == 0 and random() or -1,
+                                         c.ucb1(player)))
+        return children[-1]
 
     @property
     def current_player(self):
@@ -112,8 +111,7 @@ class Node(object):
         if actual_options:
             children = [child for child in children
                         if child.move in actual_options]
-        return sorted([(child.visits, child)
-                       for child in children])[-1][1]
+        return sorted(children, key=lambda c: c.visits)[-1]
 
     def backprop(self):
         winner = self.winner

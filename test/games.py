@@ -1,6 +1,8 @@
 from collections import namedtuple
 from copy import copy
 
+from six.moves import filter
+
 from mittmcts import Draw
 
 
@@ -180,7 +182,7 @@ class TicTacToeGame(object):
             for winning_score in cls.winning_scores:
                 if winning_score & score == winning_score:
                     winner = player
-        if winner is None and len(filter(None, new_board)) == 9:
+        if winner is None and len(list(filter(None, new_board))) == 9:
             winner = Draw
         return cls.State(board=new_board,
                          current_player=next_player,
@@ -203,9 +205,9 @@ class TicTacToeGame(object):
 
     @classmethod
     def print_board(cls, state):
-        print ''.join([((x and str(x) or str(i)) +
+        print(''.join([((x and str(x) or str(i)) +
                        ((i + 1) % 3 == 0 and '\n' or ' '))
-                       for i, x in enumerate(state.board)])
+                       for i, x in enumerate(state.board)]))
 
 
 class GameWithManyMovesOnlyOneDetermined(GameWithTwoMoves):

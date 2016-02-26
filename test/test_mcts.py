@@ -2,7 +2,7 @@ import unittest
 
 from mock import patch
 
-from games import (
+from test.games import (
     GameWithOneMove, GameWithTwoMoves, SimpleDiceRollingGame, TicTacToeGame,
     GameWithManyMovesOnlyOneDetermined
 )

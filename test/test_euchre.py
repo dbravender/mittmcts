@@ -2,7 +2,7 @@ import unittest
 
 from mittmcts import MCTS
 
-from euchre import (
+from test.euchre import (
     second_highest_jack, winning_card, deal, sort_by_trump_and_lead,
     playable_cards, suit, potential_cards_given_voids,
     EuchreGame

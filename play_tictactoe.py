@@ -1,3 +1,5 @@
+from six.moves import input
+
 from mittmcts import MCTS, Draw
 from test.games import TicTacToeGame
 
@@ -8,19 +10,19 @@ def main():
         if state.winner:
             TicTacToeGame.print_board(state)
             if state.winner is Draw:
-                print 'Draw!'
+                print('Draw!')
             elif state.winner:
-                print state.winner + ' wins'
+                print(state.winner + ' wins')
             break
         if state.current_player == 'O':
             while True:
                 TicTacToeGame.print_board(state)
                 try:
-                    move = int(raw_input('Move:'))
+                    move = int(input('Move:'))
                     state = TicTacToeGame.apply_move(state, move)
                     break
                 except ValueError:
-                    print 'That is not a legal move'
+                    print('That is not a legal move')
         else:
             result = (MCTS(TicTacToeGame, state)
                       .get_simulation_result(100))

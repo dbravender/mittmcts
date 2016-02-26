@@ -1,6 +1,8 @@
 from collections import namedtuple
 from random import shuffle, choice
 
+from six.moves import filter
+
 
 team = {
     0: 0,
@@ -154,7 +156,8 @@ class EuchreGame(object):
 
         next_player = (state.current_player + 1) % 4
 
-        number_of_cards_played = len(filter(None, cards_played_by_player))
+        number_of_cards_played = len(
+            list(filter(None, cards_played_by_player)))
 
         if number_of_cards_played == 4:
             winner = winning_card(state.trump,
@@ -229,10 +232,10 @@ class EuchreGame(object):
 
     @classmethod
     def print_board(cls, state):
-        print 'lead_suit=%r trump=%r hand=%r' % (
+        print('lead_suit=%r trump=%r hand=%r' % (
             state.lead_card and suit(state.trump, state.lead_card) or '?',
             state.trump,
-            state.visible_hand)
+            state.visible_hand))
         for player, card in enumerate(state.cards_played_by_player):
-            print '%d %s' % (player, card),
-        print
+            print('%d %s' % (player, card))
+        print()
