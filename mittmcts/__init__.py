@@ -1,6 +1,9 @@
 from collections import defaultdict, namedtuple
+from copy import deepcopy
 from math import sqrt, log
 from random import choice, random
+
+from six import iteritems
 
 
 class Draw(object):
@@ -8,22 +11,19 @@ class Draw(object):
 Draw = Draw()
 
 
-class ImpossibleState(Exception):
-    pass
-
-
 class Node(object):
     def __init__(self, game, state, parent, move, c, depth=0):
         self.parent = parent
         self.__state = state
-        self.__children = None
+        if parent is None:
+            self.__initial_state = state
+        self.__children = {}
         self.game = game
         self.move = move
         self.visits = 0
         self.draws = 0
         self.wins_by_player = defaultdict(lambda: 0)
         self.misc_by_player = defaultdict(dict)
-        self.determine = getattr(self.game, 'determine', None)
         self.impossible_state = False
         self.c = c
         self.depth = depth
@@ -50,46 +50,48 @@ class Node(object):
             self.__state = self.game.apply_move(self.parent.state, self.move)
         return self.__state
 
+    def determine(self):
+        # if games implement a determine classmethod then we are
+        # doing ISMCTS so we randomly pick the hidden state every time
+        # we play out
+        if hasattr(self.game, 'determine'):
+            self.__state = self.game.determine(self.__initial_state)
+
+    def add_new_children_for_determination(self, moves):
+        self.__children.update({move: Node(game=self.game,
+                                           state=None,
+                                           move=move,
+                                           parent=self,
+                                           c=self.c,
+                                           depth=self.depth + 1)
+                                for move in moves
+                                if move not in self.__children})
+
     @property
     def children(self):
-        if self.__children is None:
-            is_random, moves = self.game.get_moves(self.state)
-            self.is_random = is_random
-            self.__children = [Node(game=self.game,
-                                    state=None,
-                                    move=move,
-                                    parent=self,
-                                    c=self.c,
-                                    depth=self.depth + 1)
-                               for move in moves]
-        return self.__children
+        is_random, moves = self.game.get_moves(self.state)
+        self.is_random = is_random
+        self.add_new_children_for_determination(moves)
+        return [child for move, child in iteritems(self.__children)
+                if move in moves]
 
     def get_best_child(self):
         # force instantiation of child nodes and get self.is_random set
         children = self.children
+
+        if not children:
+            raise ValueError('Need to have children to find the '
+                             'best child')
+
         if self.is_random:
             return choice(children)
-        player = self.current_player
-        # if games implement a determine classmethod then we are doing ISMCTS
-        # so we randomly pick the hidden state every time we select a child
-        # node
-        if self.determine:
-            available_moves_in_this_state = self.determine(self.state)
-            children = [child for child in children
-                        if (child.move in available_moves_in_this_state
-                            and child.impossible_state is False)]
-            if not children and self.winner is None:
-                self.impossible_state = True
-                raise ImpossibleState()
+
         # visit unplayed moves first
         # if all moves have been visited then visit the move with the highest
         # ucb1 payout
-        if not children:
-            return None
-
         children = sorted(children,
                           key=lambda c: (c.visits == 0 and random() or -1,
-                                         c.ucb1(player)))
+                                         c.ucb1(self.current_player)))
         return children[-1]
 
     @property
@@ -109,8 +111,14 @@ class Node(object):
     def most_visited_child(self, actual_options=None):
         children = self.children
         if actual_options:
-            children = [child for child in children
-                        if child.move in actual_options]
+            self.add_new_children_for_determination(actual_options)
+            children = [child for move, child in iteritems(self.__children)
+                        if move in actual_options]
+        if not children:
+            raise Exception('No children when trying to find most visited '
+                            'move\n actual_options=%r children=%r' %
+                            (actual_options, children))
+
         return sorted(children, key=lambda c: c.visits)[-1]
 
     def backprop(self):
@@ -147,6 +155,8 @@ class MCTS(object):
         else:
             self.__initial_state = game.initial_state()
 
+        self.__initial_state = deepcopy(self.__initial_state)
+
     def get_simulation_result(self,
                               iterations=1,
                               actual_options=None,
@@ -163,19 +173,20 @@ class MCTS(object):
         total_depth = 0
         leaf_nodes = []
         while plays < iterations:
+            root_node.determine()
             current_node = root_node
-            try:
-                while current_node.winner is None and current_node.children:
-                    current_node = current_node.get_best_child()
-                if current_node.winner is not None:
-                    current_node.backprop()
-                    max_depth = max(max_depth, current_node.depth)
-                    total_depth += current_node.depth
-                    plays += 1
-                    if get_leaf_nodes:
-                            leaf_nodes.append(current_node)
-            except ImpossibleState:
-                continue
+            while current_node.winner is None and current_node.children:
+                current_node = current_node.get_best_child()
+            if current_node.winner is None:
+                raise ValueError('A game cannot have a terminal node that '
+                                 'has no winner. If the game was a draw '
+                                 'return Draw')
+            current_node.backprop()
+            max_depth = max(max_depth, current_node.depth)
+            total_depth += current_node.depth
+            plays += 1
+            if get_leaf_nodes:
+                    leaf_nodes.append(current_node)
 
         move = root_node.most_visited_child(actual_options).move
         return MCTSResult(root=root_node,

@@ -112,6 +112,5 @@ class TestMCTS(unittest.TestCase):
     def test_only_determined_moves_are_followed(self):
         result = (MCTS(GameWithManyMovesOnlyOneDetermined)
                   .get_simulation_result(100))
-        self.assertEqual(result.root.children[1].visits, 100)
-        # all the other options were instantiated
-        self.assertEqual(len(result.root.children), 5)
+        self.assertEqual(result.root.children[0].move, 1)
+        self.assertEqual(result.root.children[0].visits, 100)

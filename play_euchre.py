@@ -1,25 +1,17 @@
-from copy import deepcopy
-from six.moves import range, input
+from six.moves import input
 
 from mittmcts import MCTS
 from test.euchre import EuchreGame, playable_cards, suit
 
 
-def chunks(l, n):
-    """Yield successive n-sized chunks from l."""
-    for i in range(0, len(l), n):
-        yield l[i:i + n]
-
-
 def main():
     state = EuchreGame.initial_state()
-    cards = deepcopy(state.remaining_cards)
-    hands = list(chunks(cards, 5))
-    EuchreGame.print_board(state)
+    print state
+    hands = EuchreGame.determine(state).hands
     while True:
+        EuchreGame.print_board(state)
         winner = EuchreGame.get_winner(state)
         if winner is not None:
-            EuchreGame.print_board(state)
             print('Team %r wins!' % winner)
             print(state)
             break
@@ -47,15 +39,13 @@ def main():
             actual_options = playable_cards(state.trump,
                                             suit(state.trump,
                                                  state.lead_card),
-                                            hands[state.current_player - 1])
+                                            hands[state.current_player])
             result = (
                 MCTS(EuchreGame, state)
                 .get_simulation_result(1000,
                                        actual_options))
-            print(result.move)
-            hands[state.current_player - 1].remove(result.move)
+            hands[state.current_player].remove(result.move)
             state = EuchreGame.apply_move(state, result.move)
-            EuchreGame.print_board(state)
 
 
 if __name__ == '__main__':

@@ -1,7 +1,14 @@
 from collections import namedtuple
 from random import shuffle, choice
+from itertools import chain
 
 from six.moves import filter
+
+
+def chunks(l, n):
+    """Yield successive n-sized chunks from l."""
+    for i in range(0, len(l), n):
+        yield l[i:i + n]
 
 
 team = {
@@ -66,14 +73,21 @@ def suit(trump, card):
     if card == second_highest_jack(trump):
         return trump
     if card is not None:
-        return card[1]
+        try:
+            return card[1]
+        except IndexError:
+            return ValueError('Cards need to be two characters long')
 
 
 def playable_cards(trump, lead_suit, hand):
+    if lead_suit is None:
+        return hand
+
     must_play = [card for card in hand
                  if suit(trump, card) == lead_suit]
     if must_play:
         return must_play
+
     return hand
 
 
@@ -87,14 +101,14 @@ def potential_cards_given_voids(trump, voids, cards):
 class EuchreGame(object):
     """A simple trick-taking card game"""
 
-    State = namedtuple('EuchreState', 'cards_played_by_player,'
+    State = namedtuple('EuchreState', 'hands,'
+                                      'cards_played_by_player,'
                                       'current_player,'
                                       'lead_card,'
                                       'trump,'
                                       'winning_team,'
-                                      'visible_hand,'
-                                      'remaining_cards,'
                                       'tricks_won_by_team,'
+                                      'cards_played,'
                                       'voids_by_player')
 
     @classmethod
@@ -109,46 +123,49 @@ class EuchreGame(object):
         for card in visible_hand:
             if card not in all_cards:
                 raise ValueError('Invalid card in visible hand')
-        remaining_cards = list(set(all_cards) - set(visible_hand))
         if trump is None:
             trump = choice(suits)
         if trump not in suits:
             raise ValueError('Invalid trump suit')
-        return cls.State(remaining_cards=remaining_cards,
-                         visible_hand=visible_hand,
+        return cls.State(hands=[visible_hand, [], [], []],
                          cards_played_by_player=[None] * 4,
                          current_player=0,
                          lead_card=None,
-                         winning_team=None,
                          trump=trump,
+                         winning_team=None,
                          tricks_won_by_team=[0, 0],
+                         cards_played=[],
                          voids_by_player=[set(), set(), set(), set()])
 
     @classmethod
     def apply_move(cls, state, move):
         cards_played_by_player = state.cards_played_by_player[:]
         voids_by_player = state.voids_by_player
-        remaining_cards = state.remaining_cards[:]
-        visible_hand = state.visible_hand
+        hands = [hand[:] for hand in state.hands]
         tricks_won_by_team = state.tricks_won_by_team
         lead_card = state.lead_card
+        cards_played = state.cards_played
 
         if state.lead_card is None:
             lead_card = move
 
         lead_suit = suit(state.trump, lead_card)
+        if (suit(state.trump, move) in
+                state.voids_by_player[state.current_player]):
+            raise ValueError('Did not follow suit voids_by_player=%r move=%r' %
+                             (state.voids_by_player, move))
 
+        if (state.lead_card and move not in
+                playable_cards(state.trump,
+                               lead_suit,
+                               hands[state.current_player])):
+            raise ValueError('Cheating trump=%r lead=%r hand=%r move=%r' %
+                             (state.trump,
+                              lead_suit,
+                              hands[state.current_player],
+                              move))
         cards_played_by_player[state.current_player] = move
-        if state.current_player == 0:
-            visible_hand = state.visible_hand[:]
-            if (state.lead_card and move not in
-                    playable_cards(state.trump,
-                                   lead_suit,
-                                   visible_hand)):
-                raise ValueError('Cheating')
-            visible_hand.remove(move)
-        else:
-            remaining_cards.remove(move)
+        hands[state.current_player].remove(move)
 
         if lead_suit != suit(state.trump, move):
             voids_by_player = [set(x) for x in state.voids_by_player]
@@ -171,56 +188,50 @@ class EuchreGame(object):
 
             # reset the state for a new trick
             next_player = winning_player
+            cards_played = cards_played[:]
+            cards_played.extend(cards_played_by_player)
             cards_played_by_player = [None] * 4
             lead_card = None
 
         winning_team = None
-        if (len(remaining_cards) + len(visible_hand)) == 4:
-            # all the cards left are in the kitty
+        if sum(tricks_won_by_team) == 5:
             if tricks_won_by_team[0] > tricks_won_by_team[1]:
                 winning_team = 0
             else:
                 winning_team = 1
 
-        return cls.State(remaining_cards=remaining_cards,
-                         visible_hand=visible_hand,
+        return cls.State(hands=hands,
                          cards_played_by_player=cards_played_by_player,
                          current_player=next_player,
                          lead_card=lead_card,
                          winning_team=winning_team,
                          trump=state.trump,
                          tricks_won_by_team=tricks_won_by_team,
+                         cards_played=cards_played,
                          voids_by_player=voids_by_player)
 
     @classmethod
     def get_moves(cls, state):
-        if state.current_player == 0:
-            return (False,
-                    playable_cards(state.trump,
-                                   suit(state.trump, state.lead_card),
-                                   state.visible_hand))
-        else:
-            return (False, potential_cards_given_voids(
-                state.trump, state.voids_by_player[state.current_player],
-                state.remaining_cards))
+        return (False,
+                playable_cards(state.trump,
+                               suit(state.trump, state.lead_card),
+                               state.hands[state.current_player]))
 
     @classmethod
     def determine(cls, state):
-        # This could be made more efficient by properly detecting impossible
-        # distributions of cards sooner rather than waiting for
-        # potential_cards_given_voids to return no cards
-        cards_remaining_in_hand = 5 - sum(state.tricks_won_by_team)
-        if state.current_player == 0:
-            # technically this is cheating since we are letting our partner
-            # only consider moves with the cards that we have in our hand
-            # a fairer way to do this would be to determine the first
-            # player's hand when their partner is deciding what to do
-            return state.visible_hand
-        cards = potential_cards_given_voids(
-            state.trump, state.voids_by_player[state.current_player],
-            state.remaining_cards)
-        shuffle(cards)
-        return cards[:cards_remaining_in_hand]
+        remaining_hand_size = 5 - sum(state.tricks_won_by_team)
+        deck = deal()
+        remaining_cards = list(set(deck) -
+                               set(list(chain(*state.hands))) -
+                               set(state.cards_played))
+        shuffle(remaining_cards)
+        new_hands = iter(chunks(remaining_cards, remaining_hand_size))
+        hands = [hand[:] for hand in state.hands]
+        for i, hand in enumerate(state.hands):
+            if not hand:
+                hands[i] = next(new_hands)
+        state = state._replace(hands=hands)
+        return state
 
     @classmethod
     def get_winner(cls, state):
@@ -232,10 +243,9 @@ class EuchreGame(object):
 
     @classmethod
     def print_board(cls, state):
-        print('lead_suit=%r trump=%r hand=%r' % (
+        print('lead_suit=%r trump=%r cards_played_by_player=%r\nhands=%r' % (
             state.lead_card and suit(state.trump, state.lead_card) or '?',
             state.trump,
-            state.visible_hand))
-        for player, card in enumerate(state.cards_played_by_player):
-            print('%d %s' % (player, card))
-        print()
+            state.cards_played_by_player,
+            state.hands))
+        print('')

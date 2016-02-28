@@ -219,4 +219,4 @@ class GameWithManyMovesOnlyOneDetermined(GameWithTwoMoves):
     def determine(cls, state):
         # we'll say only moving into the 2rd space is legal for this
         # determination
-        return [1]
+        return state._replace(board=[1, 0, 1, 1, 1])

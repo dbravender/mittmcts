@@ -1,3 +1,4 @@
+from itertools import chain
 import unittest
 
 from mittmcts import MCTS
@@ -77,13 +78,10 @@ class TestEuchre(unittest.TestCase):
             pass
 
         state = EuchreGame.initial_state(['ad', 'kd', 'qd', 'jd', '0d'])
-        self.assertEqual(sorted(state.remaining_cards),
-                         sorted(['9d',
-                                 'ah', 'kh', 'qh', 'jh', '0h', '9h',
-                                 'as', 'ks', 'qs', 'js', '0s', '9s',
-                                 'ac', 'kc', 'qc', 'jc', '0c', '9c']))
+        state = EuchreGame.determine(state)
+        self.assertEqual(len(list(chain(*state.hands))), 20)
         state = EuchreGame.initial_state()
-        self.assertEqual(len(state.visible_hand), 5)
+        self.assertEqual(len(state.hands[0]), 5)
         state = EuchreGame.initial_state(trump='c')
         self.assertEqual(state.trump, 'c')
 
@@ -95,16 +93,21 @@ class TestEuchre(unittest.TestCase):
 
     def test_apply_move_sets_a_winner_after_4_plays(self):
         state = EuchreGame.initial_state()
+        state = EuchreGame.determine(state)
         for x in range(4):
-            if state.current_player == 0:
-                move = state.visible_hand[0]
-            else:
-                move = state.remaining_cards[0]
+            lead_suit = suit(state.trump, state.lead_card)
+            move = playable_cards(state.trump,
+                                  lead_suit,
+                                  state.hands[state.current_player], )[0]
             state = EuchreGame.apply_move(state, move)
         self.assertEqual(sum(state.tricks_won_by_team), 1)
 
     def test_a_whole_hand(self):
         state = EuchreGame.initial_state(['jd', 'jh', '9c', '9h', 'as'], 'd')
+        state = state._replace(hands=[['jd', 'jh', '9c', '9h', 'as'],
+                                      ['qd', 'ah', '0h', 'kc', 'js'],
+                                      ['9d', 'jc', 'kh', 'qc', '9s'],
+                                      ['0d', '0c', 'qh', 'ac', '0s']])
         state = EuchreGame.apply_move(state, 'jd')
         state = EuchreGame.apply_move(state, 'qd')
         state = EuchreGame.apply_move(state, '9d')
@@ -152,23 +155,6 @@ class TestEuchre(unittest.TestCase):
         # result in 20 cards being played
         self.assertEqual(result.avg_depth, 20)
 
-    def test_why_are_we_not_evaluating_all_potential_determinizations(self):
-        state = EuchreGame.State(
-            cards_played_by_player=[None, None, None, None],
-            current_player=0,
-            lead_card=None,
-            trump='c',
-            winning_team=None,
-            visible_hand=['qs', 'qh'],
-            remaining_cards=['0s', 'kd', 'js', 'ks', 'as',
-                             'qd', 'jd', '9s', '0h', 'jc'],
-            tricks_won_by_team=[1, 2],
-            voids_by_player=[set(['d']), set([]), set([]), set([])])
-        result = MCTS(EuchreGame, state).get_simulation_result(1000)
-        for child in result.root.children:
-            for grandchild in child.children:
-                self.assertTrue(grandchild.visits > 0)
-
     def test_this_hand_should_win_every_time(self):
         state = EuchreGame.State(
             cards_played_by_player=[None, None, None, None],
@@ -176,12 +162,11 @@ class TestEuchre(unittest.TestCase):
             lead_card=None,
             trump='d',
             winning_team=None,
-            visible_hand=['qc', 'jh', 'jd', '9s'],
-            remaining_cards=['9h', 'qs', 'kh', 'ad', '0s', 'ah', 'kd', '9d',
-                             'js', 'ks', 'as', 'qd', '0d', 'qh', '0h', 'jc'],
-            tricks_won_by_team=[1, 0],
+            hands=[['jd', 'jh', 'ad', 'kd', 'qd'], [], [], []],
+            tricks_won_by_team=[0, 0],
+            cards_played=[],
             voids_by_player=[set([]), set([]), set([]), set([])])
         result = (MCTS(EuchreGame, state)
                   .get_simulation_result(100, get_leaf_nodes=True))
         for node in result.leaf_nodes:
-            self.assertGreaterEqual(node.state.tricks_won_by_team[0], 3)
+            self.assertGreaterEqual(node.state.tricks_won_by_team[0], 5)
