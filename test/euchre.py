@@ -2,7 +2,10 @@ from collections import namedtuple
 from random import shuffle, choice
 from itertools import chain
 
-from six.moves import filter
+from constraint import AllDifferentConstraint, Problem
+
+from six import iteritems
+from six.moves import filter, range
 
 
 def chunks(l, n):
@@ -220,16 +223,43 @@ class EuchreGame(object):
     @classmethod
     def determine(cls, state):
         remaining_hand_size = 5 - sum(state.tricks_won_by_team)
-        deck = deal()
-        remaining_cards = list(set(deck) -
-                               set(list(chain(*state.hands))) -
-                               set(state.cards_played))
-        shuffle(remaining_cards)
-        new_hands = iter(chunks(remaining_cards, remaining_hand_size))
-        hands = [hand[:] for hand in state.hands]
-        for i, hand in enumerate(state.hands):
-            if not hand:
-                hands[i] = next(new_hands)
+        cards = list(set(deal()) -
+                     set(list(chain(*state.hands))) -
+                     set(state.cards_played))
+        shuffle(cards)
+
+        if remaining_hand_size < 5:
+            problem = Problem()
+            for player in range(4):
+                for card_index in range(remaining_hand_size):
+                    variable_name = 'p{}{}'.format(player, card_index)
+                    if state.hands[player]:
+                        problem.addVariable(variable_name,
+                                            [state.hands[player][card_index]])
+                    else:
+                        problem.addVariable(variable_name, cards)
+                        voids_by_player = state.voids_by_player[player]
+                        if voids_by_player:
+                            def ensure_voids(card,
+                                             voids_by_player=voids_by_player,
+                                             player=player):
+                                return (
+                                    suit(state.trump, card)
+                                    not in voids_by_player)
+                            problem.addConstraint(
+                                ensure_voids,
+                                (variable_name,))
+            problem.addConstraint(AllDifferentConstraint())
+
+            cards = sorted(iteritems(problem.getSolution()))
+            hands = list(chunks([c[1] for c in cards], remaining_hand_size))
+        else:
+            hands = [hand[:] for hand in state.hands]
+            new_hands = iter(chunks(cards, remaining_hand_size))
+            for i, hand in enumerate(state.hands):
+                if not hand:
+                    hands[i] = next(new_hands)
+
         state = state._replace(hands=hands)
         return state
 

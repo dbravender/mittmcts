@@ -102,6 +102,24 @@ class TestEuchre(unittest.TestCase):
             state = EuchreGame.apply_move(state, move)
         self.assertEqual(sum(state.tricks_won_by_team), 1)
 
+    def test_determine(self):
+        state = EuchreGame.initial_state()
+        state = state._replace(trump='d',
+                               tricks_won_by_team=[1, 0],
+                               hands=[['jc', 'kc', 'ah', 'js', 'as'],
+                                      [],
+                                      [],
+                                      []],
+                               voids_by_player=[set(),
+                                                set(['d', 'h', 'c']),
+                                                set(),
+                                                set(['s', 'c', 'd'])])
+        state = EuchreGame.determine(state)
+        self.assertTrue(all([suit('d', card) == 's'
+                             for card in state.hands[1]]))
+        self.assertTrue(all([suit('d', card) == 'h'
+                             for card in state.hands[3]]))
+
     def test_a_whole_hand(self):
         state = EuchreGame.initial_state(['jd', 'jh', '9c', '9h', 'as'], 'd')
         state = state._replace(hands=[['jd', 'jh', '9c', '9h', 'as'],
