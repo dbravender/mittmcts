@@ -16,14 +16,19 @@ def main():
             print('Team %r wins!' % winner)
             print(state)
             break
+        state_hands = [player == state.current_player and hand[:] or []
+                       for player, hand in enumerate(hands)]
+        state = state._replace(hands=state_hands)
+        actual_options = playable_cards(state.trump,
+                                        suit(state.trump,
+                                             state.lead_card),
+                                        hands[state.current_player])
+        result = (
+            MCTS(EuchreGame, state)
+            .get_simulation_result(1000, actual_options))
+        move = result.move
         if state.current_player == 0:
-            state_hands = [player == state.current_player and hand[:] or []
-                           for player, hand in enumerate(hands)]
-            state = state._replace(hands=state_hands)
-            result = (
-                MCTS(EuchreGame, state)
-                .get_simulation_result(1000, hands[0]))
-            print('ISMCTS chose >>%r<<' % result.move)
+            print('ISMCTS chose >>%r<<' % move)
             while True:
                 try:
                     move = input('Move (or l to list child nodes, '
@@ -35,25 +40,11 @@ def main():
                     if move == 's':
                         print(state)
                         continue
-                    hands[state.current_player].remove(move)
-                    state = EuchreGame.apply_move(state, move)
                     break
                 except ValueError as e:
                     print(str(e))
-        else:
-            state_hands = [player == state.current_player and hand[:] or []
-                           for player, hand in enumerate(hands)]
-            state = state._replace(hands=state_hands)
-            actual_options = playable_cards(state.trump,
-                                            suit(state.trump,
-                                                 state.lead_card),
-                                            hands[state.current_player])
-            result = (
-                MCTS(EuchreGame, state)
-                .get_simulation_result(1000,
-                                       actual_options))
-            hands[state.current_player].remove(result.move)
-            state = EuchreGame.apply_move(state, result.move)
+        hands[state.current_player].remove(move)
+        state = EuchreGame.apply_move(state, move)
 
 
 if __name__ == '__main__':
