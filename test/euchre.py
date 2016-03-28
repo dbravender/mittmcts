@@ -223,40 +223,38 @@ class EuchreGame(object):
 
     @classmethod
     def determine(cls, state):
+        card_played_this_round = [card is not None and 1 or 0
+                                  for card in state.cards_played_by_player]
         remaining_hand_size = 5 - sum(state.tricks_won_by_team)
+        hand_size_by_player = [remaining_hand_size - played
+                               for played in card_played_this_round]
         cards = list(set(deal()) -
                      set(list(chain(*state.hands))) -
                      set(state.cards_played))
         shuffle(cards)
 
-        if remaining_hand_size < 5:
-            problem = Problem()
-            for player in range(4):
-                if state.hands[player]:
-                    for card_index, card in enumerate(state.hands[player]):
-                        problem.addVariable('p{}{}'.format(player, card_index), [card])
-                else:
-                    voids_by_player = state.voids_by_player[player]
-                    for card_index in range(remaining_hand_size):
-                        variable_name = 'p{}{}'.format(player, card_index)
-                        if voids_by_player:
-                            current_playable_cards = [
-                                card for card in cards
-                                if (suit(state.trump, card)
-                                    not in voids_by_player)]
-                            problem.addVariable(variable_name, current_playable_cards)
-                        else:
-                            problem.addVariable(variable_name, cards)
-            problem.addConstraint(AllDifferentConstraint())
+        problem = Problem()
+        for player in range(4):
+            if state.hands[player]:
+                for card_index, card in enumerate(state.hands[player]):
+                    problem.addVariable('p{}{}'.format(player, card_index), [card])
+            else:
+                voids_by_player = state.voids_by_player[player]
+                for card_index in range(hand_size_by_player[player]):
+                    variable_name = 'p{}{}'.format(player, card_index)
+                    if voids_by_player:
+                        potential_cards = potential_cards_given_voids(
+                            state.trump, voids_by_player, cards)
+                        problem.addVariable(variable_name, potential_cards)
+                    else:
+                        problem.addVariable(variable_name, cards)
+        problem.addConstraint(AllDifferentConstraint())
 
-            cards = sorted(iteritems(problem.getSolution()))
-            hands = list(chunks([c[1] for c in cards], remaining_hand_size))
-        else:
-            hands = [hand[:] for hand in state.hands]
-            new_hands = iter(chunks(cards, remaining_hand_size))
-            for i, hand in enumerate(state.hands):
-                if not hand:
-                    hands[i] = next(new_hands)
+        cards = sorted(iteritems(problem.getSolution()))
+        hands = [[], [], [] , []]
+        for player in range(4):
+            hands[player] = [c[1] for c in cards[:hand_size_by_player[player]]]
+            del cards[:hand_size_by_player[player]]
 
         state = state._replace(hands=hands)
         return state

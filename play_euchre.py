@@ -6,9 +6,9 @@ from test.euchre import EuchreGame, playable_cards, suit
 
 def main():
     state = EuchreGame.initial_state()
-    print state
+    print(state)
     hands = EuchreGame.determine(state).hands
-    print hands
+    print(hands)
     while True:
         EuchreGame.print_board(state)
         winner = EuchreGame.get_winner(state)
@@ -40,8 +40,9 @@ def main():
                     if move == 's':
                         print(state)
                         continue
+                    assert move in hands[0]
                     break
-                except ValueError as e:
+                except (AssertionError, ValueError) as e:
                     print(str(e))
         hands[state.current_player].remove(move)
         state = EuchreGame.apply_move(state, move)

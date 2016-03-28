@@ -115,12 +115,29 @@ class TestEuchre(unittest.TestCase):
                                                 set(),
                                                 set(['s', 'c', 'd'])])
         state = EuchreGame.determine(state)
-        print state.hands[1]
         self.assertTrue(all([suit('d', card) == 's'
                              for card in state.hands[1]]))
-        print state.hands[3]
         self.assertTrue(all([suit('d', card) == 'h'
                              for card in state.hands[3]]))
+
+    def test_determine_in_the_middle_of_a_trick(self):
+        state = EuchreGame.initial_state()
+        state = state._replace(trump='d',
+                               tricks_won_by_team=[1, 0],
+                               cards_played_by_player=['jh', None, None, None],
+                               hands=[[],
+                                      [],
+                                      [],
+                                      []],
+                               voids_by_player=[set(),
+                                                set(['d', 'h', 'c']),
+                                                set(),
+                                                set(['s', 'c', 'd'])])
+        state = EuchreGame.determine(state)
+        self.assertEqual(len(state.hands[0]), 3)
+        self.assertEqual(len(state.hands[1]), 4)
+        self.assertEqual(len(state.hands[2]), 4)
+        self.assertEqual(len(state.hands[3]), 4)
 
     def test_a_whole_hand(self):
         state = EuchreGame.initial_state(['jd', 'jh', '9c', '9h', 'as'], 'd')
