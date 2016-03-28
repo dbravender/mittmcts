@@ -106,7 +106,7 @@ class TestEuchre(unittest.TestCase):
         state = EuchreGame.initial_state()
         state = state._replace(trump='d',
                                tricks_won_by_team=[1, 0],
-                               hands=[['jc', 'kc', 'ah', 'js', 'as'],
+                               hands=[['jc', 'kc', 'ah', 'js'],
                                       [],
                                       [],
                                       []],
@@ -115,8 +115,10 @@ class TestEuchre(unittest.TestCase):
                                                 set(),
                                                 set(['s', 'c', 'd'])])
         state = EuchreGame.determine(state)
+        print state.hands[1]
         self.assertTrue(all([suit('d', card) == 's'
                              for card in state.hands[1]]))
+        print state.hands[3]
         self.assertTrue(all([suit('d', card) == 'h'
                              for card in state.hands[3]]))
 
@@ -188,3 +190,9 @@ class TestEuchre(unittest.TestCase):
                   .get_simulation_result(100, get_leaf_nodes=True))
         for node in result.leaf_nodes:
             self.assertGreaterEqual(node.state.tricks_won_by_team[0], 5)
+
+    def test_determine_deals_5_cards_to_each_player(self):
+        state = EuchreGame.initial_state()
+        state = EuchreGame.determine(state)
+        self.assertTrue(all(len(hand) == 5 for hand in state.hands))
+

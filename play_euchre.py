@@ -8,6 +8,7 @@ def main():
     state = EuchreGame.initial_state()
     print state
     hands = EuchreGame.determine(state).hands
+    print hands
     while True:
         EuchreGame.print_board(state)
         winner = EuchreGame.get_winner(state)
@@ -16,9 +17,12 @@ def main():
             print(state)
             break
         if state.current_player == 0:
+            state_hands = [player == state.current_player and hand[:] or []
+                           for player, hand in enumerate(hands)]
+            state = state._replace(hands=state_hands)
             result = (
                 MCTS(EuchreGame, state)
-                .get_simulation_result(1000))
+                .get_simulation_result(1000, hands[0]))
             print('ISMCTS chose >>%r<<' % result.move)
             while True:
                 try:
@@ -31,11 +35,15 @@ def main():
                     if move == 's':
                         print(state)
                         continue
+                    hands[state.current_player].remove(move)
                     state = EuchreGame.apply_move(state, move)
                     break
-                except ValueError:
-                    print('That is not a legal move')
+                except ValueError as e:
+                    print(str(e))
         else:
+            state_hands = [player == state.current_player and hand[:] or []
+                           for player, hand in enumerate(hands)]
+            state = state._replace(hands=state_hands)
             actual_options = playable_cards(state.trump,
                                             suit(state.trump,
                                                  state.lead_card),

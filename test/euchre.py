@@ -147,7 +147,7 @@ class EuchreGame(object):
         hands = [hand[:] for hand in state.hands]
         tricks_won_by_team = state.tricks_won_by_team
         lead_card = state.lead_card
-        cards_played = state.cards_played
+        cards_played = state.cards_played[:]
 
         if state.lead_card is None:
             lead_card = move
@@ -155,19 +155,21 @@ class EuchreGame(object):
         lead_suit = suit(state.trump, lead_card)
         if (suit(state.trump, move) in
                 state.voids_by_player[state.current_player]):
-            raise ValueError('Did not follow suit voids_by_player=%r move=%r' %
-                             (state.voids_by_player, move))
+            raise ValueError('Did not follow suit voids_by_player=%r move=%r hand=%r' %
+                             (state.voids_by_player, move,
+                              state.hands[state.current_player]))
 
         if (state.lead_card and move not in
                 playable_cards(state.trump,
                                lead_suit,
-                               hands[state.current_player])):
+                               state.hands[state.current_player])):
             raise ValueError('Cheating trump=%r lead=%r hand=%r move=%r' %
                              (state.trump,
                               lead_suit,
-                              hands[state.current_player],
+                              state.hands[state.current_player],
                               move))
         cards_played_by_player[state.current_player] = move
+        cards_played.append(move)
         hands[state.current_player].remove(move)
 
         if lead_suit != suit(state.trump, move):
@@ -192,7 +194,6 @@ class EuchreGame(object):
             # reset the state for a new trick
             next_player = winning_player
             cards_played = cards_played[:]
-            cards_played.extend(cards_played_by_player)
             cards_played_by_player = [None] * 4
             lead_card = None
 
@@ -231,24 +232,21 @@ class EuchreGame(object):
         if remaining_hand_size < 5:
             problem = Problem()
             for player in range(4):
-                for card_index in range(remaining_hand_size):
-                    variable_name = 'p{}{}'.format(player, card_index)
-                    if state.hands[player]:
-                        problem.addVariable(variable_name,
-                                            [state.hands[player][card_index]])
-                    else:
-                        problem.addVariable(variable_name, cards)
-                        voids_by_player = state.voids_by_player[player]
+                if state.hands[player]:
+                    for card_index, card in enumerate(state.hands[player]):
+                        problem.addVariable('p{}{}'.format(player, card_index), [card])
+                else:
+                    voids_by_player = state.voids_by_player[player]
+                    for card_index in range(remaining_hand_size):
+                        variable_name = 'p{}{}'.format(player, card_index)
                         if voids_by_player:
-                            def ensure_voids(card,
-                                             voids_by_player=voids_by_player,
-                                             player=player):
-                                return (
-                                    suit(state.trump, card)
-                                    not in voids_by_player)
-                            problem.addConstraint(
-                                ensure_voids,
-                                (variable_name,))
+                            current_playable_cards = [
+                                card for card in cards
+                                if (suit(state.trump, card)
+                                    not in voids_by_player)]
+                            problem.addVariable(variable_name, current_playable_cards)
+                        else:
+                            problem.addVariable(variable_name, cards)
             problem.addConstraint(AllDifferentConstraint())
 
             cards = sorted(iteritems(problem.getSolution()))
