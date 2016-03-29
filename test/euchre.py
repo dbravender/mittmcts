@@ -117,15 +117,11 @@ class EuchreGame(object):
     @classmethod
     def initial_state(cls, visible_hand=None, trump=None):
         all_cards = deal()
-        if not visible_hand:
-            visible_hand = deal()
-            shuffle(visible_hand)
-            visible_hand = visible_hand[:5]
-        if len(visible_hand) != 5:
-            raise ValueError('visible_hand should have 5 cards')
+        if visible_hand is None:
+            visible_hand = []
         for card in visible_hand:
             if card not in all_cards:
-                raise ValueError('Invalid card in visible hand')
+                raise ValueError('Invalid starting hand')
         if trump is None:
             trump = choice(suits)
         if trump not in suits:
@@ -245,6 +241,7 @@ class EuchreGame(object):
                     if voids_by_player:
                         potential_cards = potential_cards_given_voids(
                             state.trump, voids_by_player, cards)
+                        shuffle(potential_cards)
                         problem.addVariable(variable_name, potential_cards)
                     else:
                         problem.addVariable(variable_name, cards)

@@ -17,7 +17,7 @@ class Node(object):
         self.parent = parent
         self.__state = state
         if parent is None:
-            self.__initial_state = state
+            self.__initial_state = deepcopy(state)
         self.__children = {}
         self.game = game
         self.move = move
@@ -138,6 +138,9 @@ class Node(object):
                 update_misc(self.state, current_node.misc_by_player)
             current_node = current_node.parent
 
+    def reset_state(self):
+        self.__state = None
+
     def __repr__(self):
         return 'state=%r move=%r visits=%r wins=%r ucb=%r' % (
             self.state,
@@ -173,11 +176,14 @@ class MCTS(object):
         max_depth = 0
         total_depth = 0
         leaf_nodes = []
+        determined = hasattr(self.game, 'determine')
         while plays < iterations:
             root_node.determine()
             current_node = root_node
             while current_node.winner is None and current_node.children:
                 current_node = current_node.get_best_child()
+                if determined:
+                    current_node.reset_state()
             if current_node.winner is None:
                 raise ValueError('A game cannot have a terminal node that '
                                  'has no winner. If the game was a draw '

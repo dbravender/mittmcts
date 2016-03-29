@@ -3,3 +3,4 @@
 *.swo
 /.tox
 /MANIFEST
+/pypy-*

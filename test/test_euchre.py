@@ -71,17 +71,10 @@ class TestEuchre(unittest.TestCase):
             self.fail('Should not allow invalid starting hands')
         except ValueError:
             pass
-        try:
-            EuchreGame.initial_state(['js'])
-            self.fail('initial_state should require a hand of 5 cards')
-        except ValueError:
-            pass
 
         state = EuchreGame.initial_state(['ad', 'kd', 'qd', 'jd', '0d'])
         state = EuchreGame.determine(state)
         self.assertEqual(len(list(chain(*state.hands))), 20)
-        state = EuchreGame.initial_state()
-        self.assertEqual(len(state.hands[0]), 5)
         state = EuchreGame.initial_state(trump='c')
         self.assertEqual(state.trump, 'c')
 
