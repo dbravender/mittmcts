@@ -205,4 +205,3 @@ class TestEuchre(unittest.TestCase):
         state = EuchreGame.initial_state()
         state = EuchreGame.determine(state)
         self.assertTrue(all(len(hand) == 5 for hand in state.hands))
-

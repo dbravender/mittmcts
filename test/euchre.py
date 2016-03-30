@@ -151,9 +151,9 @@ class EuchreGame(object):
         lead_suit = suit(state.trump, lead_card)
         if (suit(state.trump, move) in
                 state.voids_by_player[state.current_player]):
-            raise ValueError('Did not follow suit voids_by_player=%r move=%r hand=%r' %
-                             (state.voids_by_player, move,
-                              state.hands[state.current_player]))
+            raise ValueError('Did not follow suit voids_by_player=%r move=%r '
+                             'hand=%r' % (state.voids_by_player, move,
+                                          state.hands[state.current_player]))
 
         if (state.lead_card and move not in
                 playable_cards(state.trump,
@@ -233,7 +233,8 @@ class EuchreGame(object):
         for player in range(4):
             if state.hands[player]:
                 for card_index, card in enumerate(state.hands[player]):
-                    problem.addVariable('p{}{}'.format(player, card_index), [card])
+                    problem.addVariable('p{}{}'.format(player, card_index),
+                                        [card])
             else:
                 voids_by_player = state.voids_by_player[player]
                 for card_index in range(hand_size_by_player[player]):
@@ -248,7 +249,7 @@ class EuchreGame(object):
         problem.addConstraint(AllDifferentConstraint())
 
         cards = sorted(iteritems(problem.getSolution()))
-        hands = [[], [], [] , []]
+        hands = [[], [], [], []]
         for player in range(4):
             hands[player] = [c[1] for c in cards[:hand_size_by_player[player]]]
             del cards[:hand_size_by_player[player]]

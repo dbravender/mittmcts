@@ -58,7 +58,7 @@ def main():
                     move = input('')
                     assert move in hands[0]
                     break
-                except (AssertionError, ValueError) as e:
+                except (AssertionError, ValueError):
                     print(dumps({'error': 'That is not a legal move'}))
         hands[state.current_player].remove(move)
         state = EuchreGame.apply_move(state, move)
