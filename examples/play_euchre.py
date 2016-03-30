@@ -1,4 +1,5 @@
 from json import JSONEncoder, dumps
+from sys import stdout
 
 from six.moves import input
 
@@ -28,6 +29,7 @@ def dump_state(state, hands, children=None, move=None):
                  'children': children,
                  'error': None},
                 cls=EuchreJSONEncoder))
+    stdout.flush()
 
 
 def main():
