@@ -25,7 +25,10 @@ var Card = React.createClass({
     return suitLookup[this.props.serverId[1]];
   },
   render: function() {
-    return <div className={"card rank-" + this.value() + " " + this.suit()} onClick={this.sendCard}>
+    if (this.props.serverId === 'back') {
+      return <div className="card back"/>;
+    }
+    return <div data-hint={this.props.node ? this.props.node.visits : ''} className={"hint--top card rank-" + this.value() + " " + this.suit()} onClick={this.sendCard}>
       <span className="rank">{this.value().toUpperCase()}</span>
       <span className="suit" dangerouslySetInnerHTML={{__html: '&' + this.suit()  + ';'}}></span>
     </div>
@@ -33,9 +36,13 @@ var Card = React.createClass({
 });
 
 var Hand = React.createClass({
+  getChildNode: function(card) {
+    return this.props.children[card];
+  },
   render: function() {
-    return <ul className="hand">
-      {this.props.cards.map(function(card) {return <Card key={card} serverId={card}/>;})}
+    var self = this;
+    return <ul className="a-hand">
+      {this.props.cards.map(function(card) {return <li><Card key={card} serverId={card} node={self.getChildNode(card)}/></li>;})}
     </ul>
   }
 });
@@ -53,16 +60,20 @@ var Table = React.createClass({
         return;
       }
       var hand = data.hands[0];
-      this.setState({hand: hand, playedCards: data.table, trump: suitLookup[data.state.trump], tricksWonByTeam:data.state.tricks_won_by_team, children: JSON.stringify(data.children)});
+      this.setState({hand: hand, playedCards: data.table, trump: suitLookup[data.state.trump], tricksWonByTeam:data.state.tricks_won_by_team, children: data.children});
     }.bind(this);
   },
+  getCard: function(index) {
+    var card = this.state.playedCards[index];
+    return card ? <Card key={index} serverId={card}/> : <Card key={index} serverId="back"/>;
+  },
   render: function() {
-    return <div><Hand cards={this.state.hand}/>
-    {this.state.playedCards.map(function(card) {return card ? <Card key={card} serverId={card}/> : '';})}
-    <div>trump: <span classname="suit" dangerouslySetInnerHTML={{__html: this.state.trump ? '&' + this.state.trump  + ';' : ''}}></span>
-    </div>
-    <div>tricks won by team: {this.state.tricksWonByTeam.join(',')}</div>
-    <div>{this.state.children}</div>
+    return <div>
+      <div>trump: <span classname="suit" dangerouslySetInnerHTML={{__html: this.state.trump ? '&' + this.state.trump  + ';' : ''}}></span> tricks won by team: {this.state.tricksWonByTeam.join(',')}</div>
+      <div className="table">{this.getCard(2)}</div>
+      <div className="table">{this.getCard(1)} {this.getCard(3)}</div>
+      <div className="table">{this.getCard(0)}</div>
+      <Hand cards={this.state.hand} children={this.state.children}/>
     </div>;
   }
 });
