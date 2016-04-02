@@ -21,6 +21,12 @@ def dump_state(state, hands, children=None, move=None, table=None):
     if table is None:
         table = []
 
+    if state.current_player == 0:
+        overall_percent = (sum(child.wins_by_player[0]
+                               for child in children) / 1000.0) * 100
+    else:
+        overall_percent = None
+
     children = {
         child.move: {'ucb': child.ucb1(child.parent.current_player),
                      'visits': child.visits,
@@ -31,6 +37,7 @@ def dump_state(state, hands, children=None, move=None, table=None):
                  'hands': hands,
                  'children': children,
                  'table': table,
+                 'overall_percent': overall_percent,
                  'error': None},
                 cls=EuchreJSONEncoder))
     stdout.flush()
