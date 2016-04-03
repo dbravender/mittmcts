@@ -64,7 +64,7 @@ class TestEuchre(unittest.TestCase):
         self.assertEqual(
             potential_cards_given_voids('d', ['d'], ['jd', 'jh']), [])
 
-    def test_initial_state(self):
+    def test_initial_state_bad_cards(self):
         try:
             EuchreGame.initial_state(
                 ['notacard', 'notacard2', 'notacard4', 'notacard5'])
@@ -72,17 +72,26 @@ class TestEuchre(unittest.TestCase):
         except ValueError:
             pass
 
+    def test_initial_state_set_trump_and_determine_deals(self):
         state = EuchreGame.initial_state(['ad', 'kd', 'qd', 'jd', '0d'])
         state = EuchreGame.determine(state)
         self.assertEqual(len(list(chain(*state.hands))), 20)
-        state = EuchreGame.initial_state(trump='c')
+        state = EuchreGame.initial_state(trump_card='jc')
         self.assertEqual(state.trump, 'c')
 
+    def test_initial_state_invalid_trump(self):
         try:
-            EuchreGame.initial_state(trump='p')
+            EuchreGame.initial_state(trump_card='xp')
             self.fail('initial_state should require valid trump')
         except ValueError:
             pass
+
+    def test_initial_state_trump_determined_by_kitty(self):
+        state = EuchreGame.initial_state()
+        state = EuchreGame.determine(state)
+        self.assertEqual(len(state.cards_played), 1)
+        self.assertEqual(suit(state.trump, state.cards_played[0]), state.trump)
+        self.assertIn(state.trump_card, state.cards_played)
 
     def test_apply_move_sets_a_winner_after_4_plays(self):
         state = EuchreGame.initial_state()
@@ -97,7 +106,9 @@ class TestEuchre(unittest.TestCase):
 
     def test_determine(self):
         state = EuchreGame.initial_state()
-        state = state._replace(trump='d',
+        state = state._replace(trump_card='jd',
+                               trump='d',
+                               cards_played=['jd', 'ad', 'kd', 'qd', 'qc'],
                                tricks_won_by_team=[1, 0],
                                hands=[['jc', 'kc', 'ah', 'js'],
                                       [],
@@ -115,7 +126,8 @@ class TestEuchre(unittest.TestCase):
 
     def test_determine_in_the_middle_of_a_trick(self):
         state = EuchreGame.initial_state()
-        state = state._replace(trump='d',
+        state = state._replace(trump_card='jd',
+                               trump='d',
                                tricks_won_by_team=[1, 0],
                                cards_played_by_player=['jh', None, None, None],
                                hands=[[],
@@ -133,7 +145,7 @@ class TestEuchre(unittest.TestCase):
         self.assertEqual(len(state.hands[3]), 4)
 
     def test_a_whole_hand(self):
-        state = EuchreGame.initial_state(['jd', 'jh', '9c', '9h', 'as'], 'd')
+        state = EuchreGame.initial_state(['jd', 'jh', '9c', '9h', 'as'], 'kd')
         state = state._replace(hands=[['jd', 'jh', '9c', '9h', 'as'],
                                       ['qd', 'ah', '0h', 'kc', 'js'],
                                       ['9d', 'jc', 'kh', 'qc', '9s'],
@@ -178,7 +190,7 @@ class TestEuchre(unittest.TestCase):
         self.assertEqual(EuchreGame.current_player(state), 0)
 
     def test_with_mcts(self):
-        state = EuchreGame.initial_state(['0d', '0h', 'as', 'ac', 'ah'], 'd')
+        state = EuchreGame.initial_state(['0d', '0h', 'as', 'ac', 'ah'], 'jd')
         result = MCTS(EuchreGame, state).get_simulation_result(100)
         self.assertEqual(result.max_depth, 20)
         # there is no longer option now so all players playing will always
@@ -190,11 +202,12 @@ class TestEuchre(unittest.TestCase):
             cards_played_by_player=[None, None, None, None],
             current_player=0,
             lead_card=None,
+            trump_card='0d',
             trump='d',
             winning_team=None,
             hands=[['jd', 'jh', 'ad', 'kd', 'qd'], [], [], []],
             tricks_won_by_team=[0, 0],
-            cards_played=[],
+            cards_played=['0d'],
             voids_by_player=[set([]), set([]), set([]), set([])])
         result = (MCTS(EuchreGame, state)
                   .get_simulation_result(100, get_leaf_nodes=True))

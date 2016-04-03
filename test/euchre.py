@@ -109,21 +109,23 @@ class EuchreGame(object):
                                       'current_player,'
                                       'lead_card,'
                                       'trump,'
+                                      'trump_card,'
                                       'winning_team,'
                                       'tricks_won_by_team,'
                                       'cards_played,'
                                       'voids_by_player')
 
     @classmethod
-    def initial_state(cls, visible_hand=None, trump=None):
+    def initial_state(cls, visible_hand=None, trump_card=None):
         all_cards = deal()
         if visible_hand is None:
             visible_hand = []
         for card in visible_hand:
             if card not in all_cards:
                 raise ValueError('Invalid starting hand')
-        if trump is None:
-            trump = choice(suits)
+        if trump_card is None:
+            trump_card = choice(all_cards)
+        trump = trump_card[1]
         if trump not in suits:
             raise ValueError('Invalid trump suit')
         return cls.State(hands=[visible_hand, [], [], []],
@@ -131,9 +133,10 @@ class EuchreGame(object):
                          current_player=0,
                          lead_card=None,
                          trump=trump,
+                         trump_card=trump_card,
                          winning_team=None,
                          tricks_won_by_team=[0, 0],
-                         cards_played=[],
+                         cards_played=[trump_card],
                          voids_by_player=[set(), set(), set(), set()])
 
     @classmethod
@@ -206,6 +209,7 @@ class EuchreGame(object):
                          lead_card=lead_card,
                          winning_team=winning_team,
                          trump=state.trump,
+                         trump_card=state.trump_card,
                          tricks_won_by_team=tricks_won_by_team,
                          cards_played=cards_played,
                          voids_by_player=voids_by_player)
