@@ -28,7 +28,7 @@ var Card = React.createClass({
     if (this.props.serverId === 'back') {
       return <div className="card back"/>;
     }
-    return <div data-hint={this.props.node ? this.props.node.visits : ''} className={"hint--top card rank-" + this.value() + " " + this.suit()} onClick={this.sendCard}>
+    return <div data-hint={this.props.node ? this.props.node.visits : ''} className={"hint--top hint--always card rank-" + this.value() + " " + this.suit()} onClick={this.sendCard}>
       <span className="rank">{this.value().toUpperCase()}</span>
       <span className="suit" dangerouslySetInnerHTML={{__html: '&' + this.suit()  + ';'}}></span>
     </div>
