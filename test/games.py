@@ -86,7 +86,7 @@ class SimpleDiceRollingGame(object):
     rolls them. The player wins if they roll a total greater than 6"""
 
     State = namedtuple('SimpleDiceRollingGameState',
-                       'score, winner, round, dice_to_roll')
+                       ['score', 'winner', 'round', 'dice_to_roll'])
     die_roll_outcome = range(1, 7)
 
     @classmethod
@@ -162,7 +162,7 @@ class SimpleDiceRollingGame(object):
 class TicTacToeGame(object):
     """Standard tic-tac-toe game"""
 
-    State = namedtuple('TicTacToeState', 'board, current_player, winner')
+    State = namedtuple('TicTacToeState', ['board', 'current_player', 'winner'])
     winning_scores = [7, 56, 448, 73, 146, 292, 273, 84]
 
     @classmethod

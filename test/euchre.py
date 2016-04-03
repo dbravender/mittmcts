@@ -104,15 +104,16 @@ def potential_cards_given_voids(trump, voids, cards):
 class EuchreGame(object):
     """A simple trick-taking card game"""
 
-    State = namedtuple('EuchreState', 'hands,'
-                                      'cards_played_by_player,'
-                                      'current_player,'
-                                      'lead_card,'
-                                      'trump,'
-                                      'winning_team,'
-                                      'tricks_won_by_team,'
-                                      'cards_played,'
-                                      'voids_by_player')
+    State = namedtuple('EuchreState',
+                       ['hands',
+                        'cards_played_by_player',
+                        'current_player',
+                        'lead_card',
+                        'trump',
+                        'winning_team',
+                        'tricks_won_by_team',
+                        'cards_played',
+                        'voids_by_player'])
 
     @classmethod
     def initial_state(cls, visible_hand=None, trump=None):
