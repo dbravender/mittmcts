@@ -210,15 +210,15 @@ class EuchreGame(object):
                          cards_played=cards_played,
                          voids_by_player=voids_by_player)
 
-    @classmethod
-    def get_moves(cls, state):
+    @staticmethod
+    def get_moves(state):
         return (False,
                 playable_cards(state.trump,
                                suit(state.trump, state.lead_card),
                                state.hands[state.current_player]))
 
-    @classmethod
-    def determine(cls, state):
+    @staticmethod
+    def determine(state):
         card_played_this_round = [card is not None and 1 or 0
                                   for card in state.cards_played_by_player]
         remaining_hand_size = 5 - sum(state.tricks_won_by_team)
@@ -257,16 +257,16 @@ class EuchreGame(object):
         state = state._replace(hands=hands)
         return state
 
-    @classmethod
-    def get_winner(cls, state):
+    @staticmethod
+    def get_winner(state):
         return state.winning_team
 
-    @classmethod
-    def current_player(cls, state):
+    @staticmethod
+    def current_player(state):
         return team[state.current_player]
 
-    @classmethod
-    def print_board(cls, state):
+    @staticmethod
+    def print_board(state):
         print('lead_suit=%r trump=%r cards_played_by_player=%r\nhands=%r' % (
             state.lead_card and suit(state.trump, state.lead_card) or '?',
             state.trump,

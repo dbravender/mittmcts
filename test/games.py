@@ -11,31 +11,32 @@ class GameWithOneMove(object):
     MCTS should choose to win this game every time"""
 
     State = namedtuple('GameWithOneMoveState',
-                       'winner, current_player')
+                       ['winner', 'current_player'])
 
-    @classmethod
-    def initial_state(cls):
-        return cls.State(winner=None, current_player=1)
+    @staticmethod
+    def initial_state():
+        return GameWithOneMove.State(winner=None, current_player=1)
 
-    @classmethod
-    def get_moves(cls, state):
+    @staticmethod
+    def get_moves(state):
         if state.winner:
             return (False, [])
         else:
             return (False, ['win'])
 
-    @classmethod
-    def apply_move(cls, state, move):
+    @staticmethod
+    def apply_move(state, move):
         if move != 'win':
             raise ValueError('Invalid move')
-        return cls.State(winner=state.current_player, current_player=1)
+        return GameWithOneMove.State(winner=state.current_player,
+                                     current_player=1)
 
-    @classmethod
-    def get_winner(cls, state):
+    @staticmethod
+    def get_winner(state):
         return state.winner
 
-    @classmethod
-    def current_player(cls, state):
+    @staticmethod
+    def current_player(state):
         return state.current_player
 
 
@@ -45,19 +46,21 @@ class GameWithTwoMoves(object):
     passed"""
 
     State = namedtuple('GameWithOneMoveState',
-                       'board, winner, current_player')
+                       ['board', 'winner', 'current_player'])
 
-    @classmethod
-    def initial_state(cls):
-        return cls.State(board=[0, 0], winner=None, current_player=1)
+    @staticmethod
+    def initial_state():
+        return GameWithTwoMoves.State(board=[0, 0],
+                                      winner=None,
+                                      current_player=1)
 
-    @classmethod
-    def get_moves(cls, state):
+    @staticmethod
+    def get_moves(state):
         return (False, [position for position, player in enumerate(state.board)
                         if player == 0])
 
-    @classmethod
-    def apply_move(cls, state, move):
+    @staticmethod
+    def apply_move(state, move):
         winner = None
         new_board = copy(state.board)
         if state.board[move] != 0:
@@ -65,16 +68,16 @@ class GameWithTwoMoves(object):
         new_board[move] = state.current_player
         if move == 1:
             winner = state.current_player
-        return cls.State(board=new_board,
-                         winner=winner,
-                         current_player=state.current_player + 1)
+        return GameWithTwoMoves.State(board=new_board,
+                                      winner=winner,
+                                      current_player=state.current_player + 1)
 
-    @classmethod
-    def get_winner(cls, state):
+    @staticmethod
+    def get_winner(state):
         return state.winner
 
-    @classmethod
-    def current_player(cls, state):
+    @staticmethod
+    def current_player(state):
         return state.current_player
 
 
@@ -131,12 +134,12 @@ class SimpleDiceRollingGame(object):
                          winner=winner,
                          round=state.round + 1)
 
-    @classmethod
-    def get_winner(cls, state):
+    @staticmethod
+    def get_winner(state):
         return state.winner
 
-    @classmethod
-    def update_misc(cls, end_node, misc_by_player):
+    @staticmethod
+    def update_misc(end_node, misc_by_player):
         if 'scores' not in misc_by_player[1]:
             misc_by_player[1] = {
                 'scores': [],
@@ -151,8 +154,8 @@ class SimpleDiceRollingGame(object):
                      'min_score': min(scores),
                      'max_score': max(scores)})
 
-    @classmethod
-    def current_player(cls, state):
+    @staticmethod
+    def current_player(state):
         return 1
 
 
@@ -188,23 +191,23 @@ class TicTacToeGame(object):
                          current_player=next_player,
                          winner=winner)
 
-    @classmethod
-    def get_moves(cls, state):
+    @staticmethod
+    def get_moves(state):
         if state.winner:
             return (False, [])
         return (False, [i for i, spot in enumerate(state.board)
                         if spot is None])
 
-    @classmethod
-    def get_winner(cls, state):
+    @staticmethod
+    def get_winner(state):
         return state.winner
 
-    @classmethod
-    def current_player(cls, state):
+    @staticmethod
+    def current_player(state):
         return state.current_player
 
-    @classmethod
-    def print_board(cls, state):
+    @staticmethod
+    def print_board(state):
         print(''.join([((x and str(x) or str(i)) +
                        ((i + 1) % 3 == 0 and '\n' or ' '))
                        for i, x in enumerate(state.board)]))
@@ -215,8 +218,8 @@ class GameWithManyMovesOnlyOneDetermined(GameWithTwoMoves):
     def initial_state(cls):
         return cls.State(board=[0, 0, 0, 0, 0], winner=None, current_player=1)
 
-    @classmethod
-    def determine(cls, state):
+    @staticmethod
+    def determine(state):
         # we'll say only moving into the 2rd space is legal for this
         # determination
         return state._replace(board=[1, 0, 1, 1, 1])
