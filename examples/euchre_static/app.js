@@ -60,7 +60,12 @@ var Table = React.createClass({
         return;
       }
       var hand = data.hands[0];
-      this.setState({hand: hand, playedCards: data.table, trump: suitLookup[data.state.trump], tricksWonByTeam:data.state.tricks_won_by_team, children: data.children});
+      this.setState({hand: hand,
+                     playedCards: data.table,
+                     trumpValue: valueLookup(data.state.trump_card[0]).toUpperCase(),
+                     trumpSuit: suitLookup[data.state.trump],
+                     tricksWonByTeam: data.state.tricks_won_by_team,
+                     children: data.children});
       if (typeof(data.overall_percent) !== 'undefined') {
         this.setState({percentChanceOfWinning: data.overall_percent});
       }
@@ -72,7 +77,7 @@ var Table = React.createClass({
   },
   render: function() {
     return <div>
-      <div>trump: <span classname="suit" dangerouslySetInnerHTML={{__html: this.state.trump ? '&' + this.state.trump  + ';' : ''}}></span> tricks won by team: {this.state.tricksWonByTeam.join(',')} percent chance of winning: {this.state.percentChanceOfWinning}</div>
+      <div>trump: <span classname="suit" dangerouslySetInnerHTML={{__html: (this.state.trumpValue ? this.state.trumpValue : '') + (this.state.trumpSuit ? '&' + this.state.trumpSuit  + ';' : '')}}></span> tricks won by team: {this.state.tricksWonByTeam.join(',')} percent chance of winning: {this.state.percentChanceOfWinning}</div>
       <div className="table">{this.getCard(2)}</div>
       <div className="table">{this.getCard(1)} {this.getCard(3)}</div>
       <div className="table">{this.getCard(0)}</div>
