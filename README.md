@@ -1,6 +1,6 @@
 # Man In The Table (Information Set) Monte Carlo Tree Search
 
-This library is an extremely inefficient but hopefully easy-to-understand implementation of Information Set Monte Carlo Tree search written in Python.
+This library is hopefully an easy-to-understand implementation of Information Set Monte Carlo Tree search written in Python.
 
 The mascot of this project is [the Turk](https://en.wikipedia.org/wiki/The_Turk):
 
