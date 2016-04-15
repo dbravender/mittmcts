@@ -35,7 +35,7 @@ class Node(object):
         wins_by_player = self.wins_by_player.get(player, 0)
         try:
             ucb = (
-                ((wins_by_player + (self.draws * 0.5)) / self.visits) +
+                (float(wins_by_player + (self.draws * 0.5)) / self.visits) +
                 (self.c * sqrt(log(self.parent.visits) / self.visits)))
         except ZeroDivisionError:
             ucb = 0
