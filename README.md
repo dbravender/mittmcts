@@ -1,3 +1,5 @@
+[![Circle CI](https://circleci.com/gh/dbravender/mittmcts.svg?style=svg)](https://circleci.com/gh/dbravender/mittmcts)
+
 # Man In The Table (Information Set) Monte Carlo Tree Search
 
 This library is hopefully an easy-to-understand implementation of Information Set Monte Carlo Tree search written in Python.
