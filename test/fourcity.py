@@ -184,11 +184,11 @@ def get_legal_city_moves():
 
 def valid_purchases(bid_board, urbanist_location):
     legal_moves = get_legal_bid_moves()
-    legal_moves = filter(lambda spot: (
+    legal_moves = list(filter(lambda spot: (
         (spot[1] != urbanist_location[1] and
-         spot[0] != urbanist_location[0])
-        and bid_board[spot[0]][spot[1]] is None),
-        legal_moves)
+         spot[0] != urbanist_location[0]) and
+        bid_board[spot[0]][spot[1]] is None),
+        legal_moves))
     return legal_moves
 
 
@@ -200,11 +200,11 @@ def valid_builds(city_board, city_board_height, tile, architect):
     moves = [THROW_OUT]
     for x in range(4):
         for y in range(4):
-            if (((x == architect or y == architect)
-                 and city_board[x][y] is None)
-                or (city_board[x][y] and city_board[x][y].type == TOWER and
-                    city_board_height[x][y] == architect
-                    and tile.type == TOWER)):
+            if (((x == architect or y == architect) and
+                 city_board[x][y] is None) or
+                (city_board[x][y] and city_board[x][y].type == TOWER and
+                 city_board_height[x][y] == architect and
+                 tile.type == TOWER)):
                 moves.append((x, y))
     return moves
 

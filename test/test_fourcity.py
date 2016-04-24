@@ -38,8 +38,6 @@ class TestFourCityGame(unittest.TestCase):
             [______, ______, ______, ______, ______, ______, ______],
         ]
 
-        print valid_purchases(bid_board, (2, 1))
-
         self.assertEqual(valid_purchases(bid_board, (2, 1)),
                          [(0, 2), (0, 3), (0, 4), (0, 5), (6, 2),
                           (6, 3), (6, 4), (6, 5), (3, 0), (4, 0),
@@ -68,9 +66,9 @@ class TestFourCityGame(unittest.TestCase):
         self.assertEqual([25] * 4, [len(round) for round in tiles])
 
         def tiles_for_player_count(player_count, tiles):
-            return len(filter(lambda tile: tile_for_player_count(player_count,
-                                                                 tile),
-                              round))
+            return len(list(filter(
+                lambda tile: tile_for_player_count(player_count, tile),
+                round)))
 
         tiles_per_player_per_round = []
 
