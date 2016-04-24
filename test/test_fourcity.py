@@ -58,6 +58,8 @@ class TestFourCityGame(unittest.TestCase):
         heights[3][2] = 2
         self.assertEqual(valid_builds(city_board, heights, Tower(), 3),
                          [THROW_OUT, (3, 2)])
+        self.assertEqual(valid_builds(city_board, heights, Tower(), 4),
+                         [THROW_OUT, (3, 2)])
         self.assertEqual(valid_builds(city_board, heights, Park(), 3),
                          [THROW_OUT])
         self.assertEqual(valid_builds(city_board, heights, Park(), 2),

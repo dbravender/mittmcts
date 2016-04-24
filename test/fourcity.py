@@ -211,6 +211,8 @@ def valid_builds(city_board, city_board_height, tile, architect):
         for y in range(4):
             if (((x == architect or y == architect) and
                  city_board[x][y] is None) or
+                ((x == architect or y == architect) and
+                 city_board[x][y].type == TOWER and tile.type == TOWER) or
                 (city_board[x][y] and city_board[x][y].type == TOWER and
                  city_board_height[x][y] == architect and
                  tile.type == TOWER)):
