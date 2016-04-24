@@ -5,6 +5,12 @@ from random import shuffle
 from constraint import Problem
 from six import iteritems
 
+try:
+    import cPickle as pickle
+except ImportError:
+    import pickle
+
+
 THROW_OUT = 'throw-out'
 TOWER = 0
 FACTORY = 1
@@ -336,6 +342,10 @@ def find_best_resource_allocation(city_board, heights, people, energy):
     return score
 
 
+def fastcopy(item):
+    return pickle.loads(pickle.dumps(item))
+
+
 class FourCityGame(object):
     """A game not in any way related to Quadropolis"""
 
@@ -343,14 +353,16 @@ class FourCityGame(object):
                        ['construction_site',
                         'city_boards',
                         'city_board_heights',
-                        'current_player',
                         'current_architect',
                         'urbanist_location',
                         'current_tile',
+                        'current_player',
+                        'player_with_mayor',
                         'architects_by_player',
                         'energy_by_player',
                         'people_by_player',
-                        'remaining_tiles'])
+                        'remaining_tiles',
+                        'player_count'])
 
     @classmethod
     def initial_state(cls, players):
@@ -368,9 +380,11 @@ class FourCityGame(object):
                          energy_by_player=[0 for _ in range(players)],
                          people_by_player=[0 for _ in range(players)],
                          current_player=0,
+                         player_with_mayor=0,
                          architects_by_player=[range(1, 5)
                                                for _ in range(players)],
-                         remaining_tiles=None)
+                         remaining_tiles=None,
+                         player_count=players)
 
     @classmethod
     def apply_move(cls, state, move):
@@ -383,18 +397,41 @@ class FourCityGame(object):
         current_player = state.current_player
         energy_by_player = state.energy_by_player[:]
         people_by_player = state.people_by_player[:]
+        player_with_mayor = state.player_with_mayor
         architects_by_player = state.architects_by_player[:]
 
-        return cls.State(construction_site=construction_site,
-                         city_boards=city_boards,
-                         city_board_heights=city_board_heights,
-                         current_tile=current_tile,
-                         current_architect=current_architect,
-                         urbanist_location=urbanist_location,
-                         current_player=current_player,
-                         energy_by_player=energy_by_player,
-                         people_by_player=people_by_player,
-                         architects_by_player=architects_by_player)
+        if move not in cls.get_moves(state)[1]:
+            raise ValueError('Invalid move')
+
+        if current_tile:
+            # move is a build placing current_tile
+            x, y = move
+
+            if current_tile.type == TOWER:
+                # only need to copy board_heights when we modify it
+                city_board_heights = fastcopy(city_board_heights)
+                city_board_heights[current_player][x][y] += 1
+
+            # TODO: player changes to the mayor after the last build
+            # or the next player if the round is not over
+            current_player = current_player + 1
+            if current_player > state.player_count:
+                current_player = 0
+
+            # clear the current tile
+            current_tile = None
+
+        return state._replace(construction_site=construction_site,
+                              city_boards=city_boards,
+                              city_board_heights=city_board_heights,
+                              current_tile=current_tile,
+                              current_architect=current_architect,
+                              urbanist_location=urbanist_location,
+                              current_player=current_player,
+                              energy_by_player=energy_by_player,
+                              people_by_player=people_by_player,
+                              player_with_mayor=player_with_mayor,
+                              architects_by_player=architects_by_player)
 
     @staticmethod
     def get_moves(state):
@@ -421,8 +458,7 @@ class FourCityGame(object):
             for round in remaining_tiles:
                 shuffle(round)
 
-        return state._replace(remaining_tiles=remaining_tiles,
-                              )
+        return state._replace(remaining_tiles=remaining_tiles)
 
     @staticmethod
     def get_winner(state):

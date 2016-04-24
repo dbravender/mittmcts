@@ -3,7 +3,8 @@ import unittest
 from test.fourcity import (
     valid_purchases, valid_builds, tiles,
     tile_for_player_count, Park, Tower, score_board,
-    Shop, Factory, Harbor, Service, THROW_OUT, find_best_resource_allocation
+    Shop, Factory, Harbor, Service, THROW_OUT, find_best_resource_allocation,
+    FourCityGame
 )
 
 
@@ -189,8 +190,18 @@ class TestFourCityGame(unittest.TestCase):
 
         self.assertEqual(score_board(player_board, heights, 1), 58)
 
-    def test_apply_move_increases_height(self):
-        pass
+    def test_apply_move_increases_height_when_building_a_tower(self):
+        state = FourCityGame.initial_state(2)
+        self.assertEqual(state.city_board_heights[0][0][0], 0)
+        state = state._replace(current_tile=Tower(),
+                               current_architect=1)
+        state = FourCityGame.apply_move(state, (0, 0))
+        self.assertEqual(state.city_board_heights[0][0][0], 1)
+        state = state._replace(current_tile=Tower(),
+                               current_architect=1,
+                               current_player=0)
+        state = FourCityGame.apply_move(state, (0, 0))
+        self.assertEqual(state.city_board_heights[0][0][0], 2)
 
     def test_scoring_picks_best_resource_allocation(self):
         ______ = None
