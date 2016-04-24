@@ -3,7 +3,7 @@ import unittest
 from test.fourcity import (
     valid_purchases, valid_builds, tiles,
     tile_for_player_count, Park, Tower, score_board,
-    Shop, Factory, Harbor, Service, THROW_OUT
+    Shop, Factory, Harbor, Service, THROW_OUT, find_best_resource_allocation
 )
 
 
@@ -188,3 +188,44 @@ class TestFourCityGame(unittest.TestCase):
         ]
 
         self.assertEqual(score_board(player_board, heights, 1), 58)
+
+    def test_apply_move_increases_height(self):
+        pass
+
+    def test_scoring_picks_best_resource_allocation(self):
+        ______ = None
+        _park_ = Park()
+        tower_ = Tower()
+        heights = [[0] * 4 for _ in range(4)]
+
+        board = [
+            [tower_, _park_, tower_, ______],
+            [______, ______, ______, ______],
+            [______, ______, ______, ______],
+            [______, ______, ______, ______],
+        ]
+
+        heights[0][0] = 1
+        heights[0][2] = 4
+
+        self.assertEqual(find_best_resource_allocation(board, heights,
+                                                       people=0,
+                                                       energy=1),
+                         12)
+
+        self.assertEqual(find_best_resource_allocation(board, heights,
+                                                       people=0,
+                                                       energy=2),
+                         15)
+
+        # the park will absorb the pollution
+        self.assertEqual(find_best_resource_allocation(board, heights,
+                                                       people=0,
+                                                       energy=3),
+                         15)
+
+        # when there is no place to put the energy it takes away points
+        self.assertEqual(find_best_resource_allocation(board, heights,
+                                                       people=0,
+                                                       energy=4),
+                         14)

@@ -2,6 +2,7 @@ from collections import namedtuple
 from itertools import groupby
 from random import shuffle
 
+from constraint import Problem
 
 THROW_OUT = 'throw-out'
 TOWER = 0
@@ -13,32 +14,33 @@ PARK = 5
 
 
 Tile = namedtuple('Tile', ['type', 'people', 'points', 'players',
-                           'pollution', 'customers', 'mayor'])
-Tile.__new__.__defaults__ = (None, 0, 0, None, 0, 0, False)
+                           'pollution', 'customers', 'mayor', 'uses_people',
+                           'uses_energy', 'eats_pollution'])
+Tile.__new__.__defaults__ = (None, 0, 0, None, 0, 0, False, 0, 0, 0)
 
 
 def Tower(**kwargs):
-    return Tile(type=TOWER, **kwargs)
+    return Tile(type=TOWER, uses_energy=1, **kwargs)
 
 
 def Factory(**kwargs):
-    return Tile(type=FACTORY, **kwargs)
+    return Tile(type=FACTORY, uses_people=1, **kwargs)
 
 
 def Harbor(**kwargs):
-    return Tile(type=HARBOR, **kwargs)
+    return Tile(type=HARBOR, uses_people=1, **kwargs)
 
 
 def Service(**kwargs):
-    return Tile(type=SERVICE, **kwargs)
+    return Tile(type=SERVICE, uses_people=1, **kwargs)
 
 
 def Shop(**kwargs):
-    return Tile(type=SHOP, **kwargs)
+    return Tile(type=SHOP, uses_energy=1, **kwargs)
 
 
 def Park(**kwargs):
-    return Tile(type=PARK, **kwargs)
+    return Tile(type=PARK, eats_pollution=1, **kwargs)
 
 
 tiles = [
@@ -209,7 +211,7 @@ def valid_builds(city_board, city_board_height, tile, architect):
     return moves
 
 
-def adjacent_iterator(city_board):
+def board_iterator(city_board, needs_adjacent=True):
     zones = [
         [0, 0, 1, 1],
         [0, 0, 1, 1],
@@ -218,12 +220,16 @@ def adjacent_iterator(city_board):
     ]
     for x in range(4):
         for y in range(4):
-            yield (x, y, city_board[x][y],
-                   [city_board[xd][yd]
+            if city_board[x][y] is None:
+                continue
+            adjacent = None
+            if needs_adjacent:
+                adjacent = [
+                    city_board[xd][yd]
                     for xd, yd in [(x - 1, y), (x + 1, y),
                                    (x, y - 1), (x, y + 1)]
-                    if xd >= 0 and xd <= 3 and yd >= 0 and yd <= 3],
-                   zones[x][y])
+                    if xd >= 0 and xd <= 3 and yd >= 0 and yd <= 3]
+            yield (x, y, city_board[x][y], adjacent, zones[x][y])
 
 
 def get_longest_harbors(city_board):
@@ -254,9 +260,7 @@ tower_scores = {1: 1, 2: 3, 3: 6, 4: 10}
 def score_board(city_board, city_board_heights, unused_pieces):
     score = 0
     seen_service = [0] * 4
-    for x, y, tile, adjacent_tiles, zone in adjacent_iterator(city_board):
-        if not tile:
-            continue
+    for x, y, tile, adjacent_tiles, zone in board_iterator(city_board):
         if tile.type == TOWER:
             score += tower_scores[city_board_heights[x][y]]
         elif tile.type == PARK:
@@ -284,6 +288,49 @@ def score_board(city_board, city_board_heights, unused_pieces):
         score += harbor_scores.get(length, 0)
 
     score -= unused_pieces
+
+    return score
+
+
+def find_best_resource_allocation(city_board, heights, people, energy):
+    people_spots = []
+    energy_spots = []
+    pollution_eaters = 0
+    resource_allocation = Problem()
+    pollution = 0
+    unemployed = 0
+    for x, y, tile, _, _ in board_iterator(city_board):
+        if tile.eats_pollution:
+            pollution_eaters += 1
+        if tile.uses_people:
+            people_spots.append((x, y))
+            resource_allocation.addVariable((x, y), [0, 1])
+        if tile.uses_energy:
+            energy_spots.append((x, y))
+            resource_allocation.addVariable((x, y), [0, 1])
+
+    if energy > len(energy_spots):
+        pollution = max(0, energy - len(energy_spots) - pollution_eaters)
+        energy = len(energy_spots)
+    if people > len(people_spots):
+        unemployed = people - len(people_spots)
+        people = len(people_spots)
+
+    if people_spots:
+        (resource_allocation
+         .addConstraint(lambda *args: sum(args) == people, people_spots))
+    if energy_spots:
+        (resource_allocation
+         .addConstraint(lambda *args: sum(args) == energy, energy_spots))
+
+    score = 0
+
+    for allocation in resource_allocation.getSolutions():
+        board = [row[:] for row in city_board]
+        for location, active in allocation.iteritems():
+            if not active:
+                board[location[0]][location[1]] = None
+        score = max(score, score_board(board, heights, pollution + unemployed))
 
     return score
 
