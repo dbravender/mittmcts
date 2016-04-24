@@ -229,5 +229,5 @@ def flamegraph(mcts_result, depth=None):
         if depth is not None:
             moves = moves[:depth]
         walks[';'.join(moves)] += 1
-    for path, count in walks.iteritems():
+    for path, count in iteritems(walks):
         print('{} {}'.format(path, count))

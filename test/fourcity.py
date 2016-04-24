@@ -3,6 +3,7 @@ from itertools import groupby
 from random import shuffle
 
 from constraint import Problem
+from six import iteritems
 
 THROW_OUT = 'throw-out'
 TOWER = 0
@@ -327,7 +328,7 @@ def find_best_resource_allocation(city_board, heights, people, energy):
 
     for allocation in resource_allocation.getSolutions():
         board = [row[:] for row in city_board]
-        for location, active in allocation.iteritems():
+        for location, active in iteritems(allocation):
             if not active:
                 board[location[0]][location[1]] = None
         score = max(score, score_board(board, heights, pollution + unemployed))
