@@ -204,6 +204,7 @@ class TestFourCityGame(unittest.TestCase):
                                current_player=0)
         state = FourCityGame.apply_move(state, (0, 0))
         self.assertEqual(state.city_board_heights[0][0][0], 2)
+        self.assertEqual(state.city_boards[0][0][0], Tower())
 
     def test_scoring_picks_best_resource_allocation(self):
         ______ = None

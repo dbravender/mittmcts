@@ -414,6 +414,9 @@ class FourCityGame(object):
                 city_board_heights = fastcopy(city_board_heights)
                 city_board_heights[current_player][x][y] += 1
 
+            city_boards = fastcopy(city_boards)
+            city_boards[current_player][x][y] = current_tile
+
             # TODO: player changes to the mayor after the last build
             # or the next player if the round is not over
             current_player = current_player + 1
