@@ -114,6 +114,9 @@ class TestFourCityGame(unittest.TestCase):
                          [THROW_OUT])
         self.assertEqual(valid_builds(city_board, heights, Park(), 2),
                          [THROW_OUT])
+        heights[3][2] = 4
+        self.assertEqual(valid_builds(city_board, heights, Tower(), 4),
+                         [THROW_OUT])
 
     def test_tiles(self):
         self.assertEqual([25] * 4, [len(round) for round in tiles])
