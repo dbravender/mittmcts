@@ -358,7 +358,7 @@ def find_best_resource_allocation(city_board, heights, people, energy):
         (resource_allocation
          .addConstraint(lambda *args: sum(args) == energy, energy_spots))
 
-    score = 0
+    score = (0, 0, 0)
 
     for allocation in resource_allocation.getSolutions():
         board = [row[:] for row in city_board]
