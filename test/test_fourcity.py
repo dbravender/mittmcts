@@ -149,6 +149,7 @@ class TestFourCityGame(unittest.TestCase):
 
     def test_scoring(self):
         heights = [[0] * 4 for _ in range(4)]
+        customers = [[0] * 4 for _ in range(4)]
         ______ = None
         _park_ = Park()
         tower_ = Tower()
@@ -158,7 +159,8 @@ class TestFourCityGame(unittest.TestCase):
             [______, ______, ______, ______],
             [______, ______, ______, ______],
         ]
-        self.assertEqual(score_board(player_board, heights, 0), (0, 0, 1))
+        self.assertEqual(score_board(player_board, heights, customers, 0),
+                         (0, 0, 1))
 
         player_board = [
             [tower_, _park_, ______, ______],
@@ -169,7 +171,8 @@ class TestFourCityGame(unittest.TestCase):
 
         heights[0][0] = 1
 
-        self.assertEqual(score_board(player_board, heights, 0), (3, 0, 2))
+        self.assertEqual(score_board(player_board, heights, customers, 0),
+                         (3, 0, 2))
 
         player_board = [
             [tower_, _park_, tower_, ______],
@@ -178,7 +181,8 @@ class TestFourCityGame(unittest.TestCase):
             [______, ______, ______, ______],
         ]
         heights[0][2] = 1
-        self.assertEqual(score_board(player_board, heights, 0), (6, 0, 3))
+        self.assertEqual(score_board(player_board, heights, customers, 0),
+                         (6, 0, 3))
 
         player_board = [
             [tower_, ______, tower_, ______],
@@ -189,7 +193,8 @@ class TestFourCityGame(unittest.TestCase):
         heights[1][0] = 1
         heights[1][2] = 1
         heights[2][1] = 1
-        self.assertEqual(score_board(player_board, heights, 0), (12, 0, 6))
+        self.assertEqual(score_board(player_board, heights, customers, 0),
+                         (12, 0, 6))
 
         player_board = [
             [tower_, tower_, tower_, ______],
@@ -198,7 +203,8 @@ class TestFourCityGame(unittest.TestCase):
             [______, ______, ______, ______],
         ]
         heights[0][1] = 1
-        self.assertEqual(score_board(player_board, heights, 0), (17, 0, 7))
+        self.assertEqual(score_board(player_board, heights, customers, 0),
+                         (17, 0, 7))
 
         tower2 = Tower()
         tower3 = Tower()
@@ -223,7 +229,15 @@ class TestFourCityGame(unittest.TestCase):
             [0, 0, 0, 0]
         ]
 
-        self.assertEqual(score_board(player_board, heights, 0), (59, 6, 13))
+        customers = [
+            [0, 0, 0, 0],
+            [0, 0, 0, 0],
+            [0, 3, 0, 4],
+            [0, 0, 0, 0],
+        ]
+
+        self.assertEqual(score_board(player_board, heights, customers, 0),
+                         (59, 6, 13))
 
         serv__ = Service()
         serv_1 = Service(points=1)
@@ -243,7 +257,15 @@ class TestFourCityGame(unittest.TestCase):
             [0, 0, 0, 0]
         ]
 
-        self.assertEqual(score_board(player_board, heights, 1), (58, 8, 15))
+        customers = [
+            [0, 0, 0, 0],
+            [0, 0, 0, 0],
+            [0, 0, 0, 0],
+            [0, 0, 0, 0],
+        ]
+
+        self.assertEqual(score_board(player_board, heights, customers, 1),
+                         (58, 8, 15))
 
     def test_apply_move_increases_height_when_building_a_tower(self):
         state = FourCityGame.initial_state(2)

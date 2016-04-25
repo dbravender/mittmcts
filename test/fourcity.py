@@ -289,7 +289,7 @@ shop_scores = {1: 1, 2: 2, 3: 4, 4: 7}
 tower_scores = {1: 1, 2: 3, 3: 6, 4: 10}
 
 
-def score_board(city_board, city_board_heights, unused_pieces):
+def score_board(city_board, city_board_heights, customers, unused_pieces):
     score = 0
     seen_service = [0] * 4
     total_tiles = 0
@@ -315,7 +315,7 @@ def score_board(city_board, city_board_heights, unused_pieces):
                 if adjacent_tile.type == HARBOR:
                     score += 3
         elif tile.type == SHOP:
-            score += shop_scores.get(tile.customers, 0)
+            score += shop_scores.get(customers[x][y], 0)
         elif tile.type == SERVICE:
             seen_service[zone] = 1
 
@@ -337,22 +337,29 @@ def find_best_resource_allocation(city_board, heights, people, energy):
     resource_allocation = Problem()
     pollution = 0
     unemployed = 0
+    people_needed = 0
     for x, y, tile, _, _ in board_iterator(city_board):
         if tile.eats_pollution:
             pollution_eaters += 1
         if tile.uses_people:
-            people_spots.append((x, y))
-            resource_allocation.addVariable((x, y), [0, 1])
+            people_spots.append((x, y, 'people'))
+            resource_allocation.addVariable((x, y, 'people'), [0, 1])
+            people_needed += 1
         if tile.uses_energy:
-            energy_spots.append((x, y))
-            resource_allocation.addVariable((x, y), [0, 1])
+            energy_spots.append((x, y, 'energy'))
+            resource_allocation.addVariable((x, y, 'energy'), [0, 1])
+        if tile.type == SHOP:
+            people_spots.append((x, y, 'customers'))
+            resource_allocation.addVariable((x, y, 'customers'),
+                                            [0, 1, 2, 3, 4])
+            people_needed += 4
 
     if energy > len(energy_spots):
         pollution = max(0, energy - len(energy_spots) - pollution_eaters)
         energy = len(energy_spots)
-    if people > len(people_spots):
-        unemployed = people - len(people_spots)
-        people = len(people_spots)
+    if people > people_needed:
+        unemployed = people - people_needed
+        people = people_needed
 
     if people_spots:
         (resource_allocation
@@ -365,10 +372,19 @@ def find_best_resource_allocation(city_board, heights, people, energy):
 
     for allocation in resource_allocation.getSolutions():
         board = [row[:] for row in city_board]
+        customers = [[0] * 4 for _ in range(4)]
         for location, active in iteritems(allocation):
-            if not active:
-                board[location[0]][location[1]] = None
-        score = max(score, score_board(board, heights, pollution + unemployed))
+            x, y, kind = location
+            if kind == 'customers':
+                customers[x][y] = active
+            else:
+                if not active:
+                    board[x][y] = None
+
+        score = max(score, score_board(board,
+                                       heights,
+                                       customers,
+                                       pollution + unemployed))
 
     return score
 
