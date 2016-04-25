@@ -4,7 +4,7 @@ from test.fourcity import (
     valid_purchases, valid_builds, tiles,
     tile_for_player_count, Park, Tower, score_board,
     Shop, Factory, Harbor, Service, THROW_OUT, find_best_resource_allocation,
-    FourCityGame
+    FourCityGame, get_tile_architect_points_at
 )
 
 
@@ -43,6 +43,37 @@ class TestFourCityGame(unittest.TestCase):
                          [(0, 2), (0, 3), (0, 4), (0, 5), (6, 2),
                           (6, 3), (6, 4), (6, 5), (3, 0), (4, 0),
                           (5, 0), (1, 6), (3, 6), (4, 6), (5, 6)])
+
+    def test_get_tile_architect_points_at(self):
+        ______ = None
+        _urba_ = 'urbanist'
+        _bob__ = 'bob-the-builder'
+
+        construction_site = [
+            [______, ______, ______, ______, ______, ______, ______],
+            [______, ______, ______, ______, ______, ______, ______],
+            [______, _urba_, _bob__, ______, ______, ______, ______],
+            [______, ______, ______, ______, ______, ______, ______],
+            [______, ______, ______, ______, ______, ______, ______],
+            [______, ______, ______, ______, ______, ______, ______],
+            [______, ______, ______, ______, ______, ______, ______],
+        ]
+
+        self.assertEqual(
+            get_tile_architect_points_at(construction_site, 0, 1, 2),
+            (_urba_, 2, 1))
+
+        self.assertEqual(
+            get_tile_architect_points_at(construction_site, 2, 0, 1),
+            (_urba_, 2, 1))
+
+        self.assertEqual(
+            get_tile_architect_points_at(construction_site, 2, 6, 4),
+            (_bob__, 2, 2))
+
+        self.assertEqual(
+            get_tile_architect_points_at(construction_site, 6, 2, 4),
+            (_bob__, 2, 2))
 
     def test_build(self):
         city_board = [[None] * 4 for _ in range(4)]
