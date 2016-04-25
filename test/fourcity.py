@@ -201,6 +201,8 @@ def get_legal_city_moves():
 
 def valid_purchases(bid_board, urbanist_location):
     legal_moves = get_legal_bid_moves()
+    if not urbanist_location:
+        return legal_moves
     legal_moves = list(filter(lambda spot: (
         (spot[1] != urbanist_location[1] and
          spot[0] != urbanist_location[0]) and
@@ -370,6 +372,10 @@ def find_best_resource_allocation(city_board, heights, people, energy):
     return score
 
 
+def reset_architects(players):
+    return [range(1, 5) for _ in range(players)]
+
+
 def fastcopy(item):
     """~12 times faster than deepcopy and ~28 times faster than
     pickling and unpicling for copying board state"""
@@ -398,7 +404,8 @@ class FourCityGame(object):
                         'people_by_player',
                         'remaining_tiles',
                         'player_count',
-                        'current_round'])
+                        'current_round',
+                        'winner'])
 
     @classmethod
     def initial_state(cls, players):
@@ -417,11 +424,11 @@ class FourCityGame(object):
                          people_by_player=[0 for _ in range(players)],
                          current_player=0,
                          player_with_mayor=0,
-                         architects_by_player=[range(1, 5)
-                                               for _ in range(players)],
+                         architects_by_player=reset_architects(players),
                          remaining_tiles=None,
                          player_count=players,
-                         current_round=0)
+                         current_round=0,
+                         winner=None)
 
     @classmethod
     def apply_move(cls, state, move):
@@ -438,29 +445,28 @@ class FourCityGame(object):
         architects_by_player = state.architects_by_player
         remaining_tiles = state.remaining_tiles
         current_round = state.current_round
+        winner = None
 
         if move not in cls.get_moves(state)[1]:
             raise ValueError('Invalid move')
 
         if current_tile:
-            # move is a build placing current_tile
-            x, y = move
+            if move != 'throw-out':
+                # move is a build placing current_tile
+                x, y = move
 
-            if current_tile.type == TOWER:
-                # only need to copy board_heights when we modify it
-                city_board_heights = fastcopy(city_board_heights)
-                city_board_heights[current_player][x][y] += 1
+                if current_tile.type == TOWER:
+                    # only need to copy board_heights when we modify it
+                    city_board_heights = fastcopy(city_board_heights)
+                    city_board_heights[current_player][x][y] += 1
 
-            city_boards = fastcopy(city_boards)
-            city_boards[current_player][x][y] = current_tile
-
-            current_player = current_player + 1
-            if current_player > state.player_count:
-                current_player = 0
+                city_boards = fastcopy(city_boards)
+                city_boards[current_player][x][y] = current_tile
 
             # clear the current tile and current architect
             current_tile = None
             current_architect = None
+            current_player = (current_player + 1) % state.player_count
         else:
             # move is picking up a tile from the construction site
             architect, architect_x, architect_y = move
@@ -474,28 +480,44 @@ class FourCityGame(object):
                 construction_site, architect_x, architect_y, architect)
             urbanist_location = (tile_x, tile_y)
             construction_site[tile_x][tile_y] = None
-            current_architect = architect
-            if current_tile.mayor:
-                player_with_mayor = current_player
-            if current_tile.people:
-                people_by_player = people_by_player[:]
-                people_by_player[current_player] += current_tile.people
-            if current_tile.pollution:
-                energy_by_player = energy_by_player[:]
-                energy_by_player[current_player] += current_tile.energy
             architects_by_player = [architects[:]
                                     for architects in architects_by_player]
             architects_by_player[current_player].remove(architect)
+            if current_tile:
+                current_architect = architect
+                if current_tile.mayor:
+                    player_with_mayor = current_player
+                if current_tile.people:
+                    people_by_player = people_by_player[:]
+                    people_by_player[current_player] += current_tile.people
+                if current_tile.pollution:
+                    energy_by_player = energy_by_player[:]
+                    energy_by_player[current_player] += current_tile.pollution
+            else:
+                current_tile = None
+                current_architect = None
 
-        if sum([len(_) for _ in architects_by_player]) == 0:
+                current_player = (current_player + 1) % state.player_count
+
+        if sum(len(_) for _ in architects_by_player) == 0:
             # everyone has played their architects - reset for a new round
             if len(remaining_tiles) == 0:
-                # game is over
-                pass
+                scores = []
+                for player in range(state.player_count):
+                    score, tb1, tb2 = find_best_resource_allocation(
+                        city_board=city_boards[player],
+                        heights=city_board_heights[player],
+                        people=people_by_player[player],
+                        energy=energy_by_player[player])
+                    scores.append((score, tb1, tb2, player))
+                winner_score = sorted(scores, reverse=True)[0]
+                winner = [winner_score[3]] + list(winner_score)[:-1]
             else:
+                architects_by_player = reset_architects(state.player_count)
                 current_round += 1
                 construction_site, remaining_tiles = (
-                    populate_construction_site(remaining_tiles))
+                    populate_construction_site(remaining_tiles,
+                                               state.player_count))
 
                 urbanist_location = None
                 current_player = player_with_mayor
@@ -512,7 +534,8 @@ class FourCityGame(object):
                               player_with_mayor=player_with_mayor,
                               architects_by_player=architects_by_player,
                               remaining_tiles=remaining_tiles,
-                              current_round=current_round)
+                              current_round=current_round,
+                              winner=winner)
 
     @staticmethod
     def get_moves(state):
@@ -539,20 +562,20 @@ class FourCityGame(object):
 
         if remaining_tiles is None:
             remaining_tiles = []
-            for round_tiles in tiles[:state.current_round]:
+            for round_tiles in tiles[state.current_round:]:
                 round_tiles = round_tiles[:]
                 shuffle(round_tiles)
                 remaining_tiles.extend(round_tiles)
         if all(spot is None for spot in chain(*state.construction_site)):
             construction_site, remaining_tiles = populate_construction_site(
-                remaining_tiles, )
+                remaining_tiles, state.player_count)
 
         return state._replace(remaining_tiles=remaining_tiles,
                               construction_site=construction_site)
 
     @staticmethod
     def get_winner(state):
-        return state.winning_team
+        return state.winner and state.winner[0]
 
     @staticmethod
     def current_player(state):

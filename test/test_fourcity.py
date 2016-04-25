@@ -1,5 +1,7 @@
 import unittest
 
+from mittmcts import MCTS
+
 from test.fourcity import (
     valid_purchases, valid_builds, tiles,
     tile_for_player_count, Park, Tower, score_board,
@@ -291,3 +293,10 @@ class TestFourCityGame(unittest.TestCase):
                                                        people=0,
                                                        energy=4),
                          (14, 0, 3))
+
+    def test_with_mcts(self):
+        state = FourCityGame.initial_state(2)
+        result = (MCTS(FourCityGame, state)
+                  .get_simulation_result(10, get_leaf_nodes=True))
+        for leaf_node in result.leaf_nodes:
+            print(leaf_node)
