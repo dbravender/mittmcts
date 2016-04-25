@@ -289,7 +289,13 @@ tower_scores = {1: 1, 2: 3, 3: 6, 4: 10}
 def score_board(city_board, city_board_heights, unused_pieces):
     score = 0
     seen_service = [0] * 4
+    total_tiles = 0
+    inhabited_tiles = 0
+
     for x, y, tile, adjacent_tiles, zone in board_iterator(city_board):
+        total_tiles += 1
+        if tile.uses_people:
+            inhabited_tiles += 1
         if tile.type == TOWER:
             score += tower_scores[city_board_heights[x][y]]
         elif tile.type == PARK:
@@ -318,7 +324,7 @@ def score_board(city_board, city_board_heights, unused_pieces):
 
     score -= unused_pieces
 
-    return score
+    return score, inhabited_tiles, total_tiles
 
 
 def find_best_resource_allocation(city_board, heights, people, energy):
