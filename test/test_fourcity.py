@@ -4,7 +4,7 @@ from test.fourcity import (
     valid_purchases, valid_builds, tiles,
     tile_for_player_count, Park, Tower, score_board,
     Shop, Factory, Harbor, Service, THROW_OUT, find_best_resource_allocation,
-    FourCityGame, get_tile_architect_points_at
+    FourCityGame, get_tile_architect_points_at, populate_construction_site
 )
 
 
@@ -74,6 +74,23 @@ class TestFourCityGame(unittest.TestCase):
         self.assertEqual(
             get_tile_architect_points_at(construction_site, 6, 2, 4),
             (_bob__, 2, 2))
+
+    def test_populate_construction_site(self):
+        remaining_tiles = [Shop()] + [Tower() for _ in range(25)]
+        construction_site, remaining_tiles = populate_construction_site(
+            remaining_tiles, 2)
+        self.assertEqual(
+            construction_site,
+            [
+                [None] * 7,
+                [None, Shop(), Tower(), Tower(), Tower(), Tower(), None],
+                [None, Tower(), Tower(), Tower(), Tower(), Tower(), None],
+                [None, Tower(), Tower(), Tower(), Tower(), Tower(), None],
+                [None, Tower(), Tower(), Tower(), Tower(), Tower(), None],
+                [None, Tower(), Tower(), Tower(), Tower(), Tower(), None],
+                [None] * 7,
+            ])
+        self.assertEqual(remaining_tiles, [Tower()])
 
     def test_build(self):
         city_board = [[None] * 4 for _ in range(4)]

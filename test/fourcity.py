@@ -232,9 +232,9 @@ def populate_construction_site(remaining_tiles, player_count):
     remaining_tiles = remaining_tiles[:]
     construction_site = [[None for _ in range(7)]
                          for _ in range(7)]
-    for x in range(1, 5):
-        for y in range(1, 5):
-            tile = remaining_tiles.pop()
+    for x in range(1, 6):
+        for y in range(1, 6):
+            tile = remaining_tiles.pop(0)
             if tile_for_player_count(player_count, tile):
                 construction_site[x][y] = tile
     return construction_site, remaining_tiles
