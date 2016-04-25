@@ -12,8 +12,22 @@ class Draw(object):
 Draw = Draw()
 
 
+def ucb1(node, player):
+    if not node.parent:
+        return 0
+    wins_by_player = node.wins_by_player.get(player, 0)
+    try:
+        ucb = (
+            (float(wins_by_player + (node.draws * 0.5)) / node.visits) +
+            (node.c * sqrt(log(node.parent.visits) / node.visits)))
+    except ZeroDivisionError:
+        ucb = 0
+    return ucb
+
+
 class Node(object):
-    def __init__(self, game, state, parent, move, c, depth=0):
+    def __init__(self, game, state, parent, move, c, depth=0,
+                 evaluation_function=ucb1):
         self.parent = parent
         self.__state = state
         if parent is None:
@@ -28,18 +42,7 @@ class Node(object):
         self.impossible_state = False
         self.c = c
         self.depth = depth
-
-    def ucb1(self, player):
-        if not self.parent:
-            return 0
-        wins_by_player = self.wins_by_player.get(player, 0)
-        try:
-            ucb = (
-                (float(wins_by_player + (self.draws * 0.5)) / self.visits) +
-                (self.c * sqrt(log(self.parent.visits) / self.visits)))
-        except ZeroDivisionError:
-            ucb = 0
-        return ucb
+        self.evaluation_function = evaluation_function
 
     @property
     def winner(self):
@@ -92,7 +95,8 @@ class Node(object):
         # ucb1 payout
         children = sorted(children,
                           key=lambda c: (c.visits == 0 and random() or -1,
-                                         c.ucb1(self.current_player)))
+                                         self.evaluation_function(
+                                             c, self.current_player)))
         return children[-1]
 
     @property
@@ -147,13 +151,15 @@ class Node(object):
             self.move,
             self.visits,
             self.wins_by_player[self.parent.current_player],
-            self.ucb1(self.parent.current_player))
+            self.evaluation_function(self, self.parent.current_player))
 
 
 class MCTS(object):
-    def __init__(self, game, initial_state=None, c=sqrt(2)):
+    def __init__(self, game, initial_state=None, c=sqrt(2),
+                 evaluation_function=ucb1):
         self.game = game
         self.c = c
+        self.evaluation_function = evaluation_function
         if initial_state:
             self.__initial_state = initial_state
         else:
@@ -169,7 +175,8 @@ class MCTS(object):
                          parent=None,
                          state=self.__initial_state,
                          move=None,
-                         c=self.c)
+                         c=self.c,
+                         evaluation_function=self.evaluation_function)
         MCTSResult = namedtuple('MCTSResult', 'root, move, leaf_nodes,'
                                               'max_depth, avg_depth')
         plays = 0
