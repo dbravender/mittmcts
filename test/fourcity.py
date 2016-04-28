@@ -222,8 +222,8 @@ def valid_builds(city_board, city_board_height, tile, architect):
             if (((x == architect or y == architect) and
                  city_board[x][y] is None) or
                 ((x == architect or y == architect) and
-                 city_board[x][y].type == TOWER and tile.type == TOWER
-                 and city_board_height[x][y] < 4) or
+                 city_board[x][y].type == TOWER and tile.type == TOWER and
+                 city_board_height[x][y] < 4) or
                 (city_board[x][y] and city_board[x][y].type == TOWER and
                  city_board_height[x][y] == architect and
                  tile.type == TOWER and architect < 4)):
@@ -390,7 +390,11 @@ def find_best_resource_allocation(city_board, heights, people, energy):
 
 
 def reset_architects(players):
-    return [range(1, 5) for _ in range(players)]
+    return [list(range(1, 5)) for _ in range(players)]
+
+
+def clear_construction_site():
+    return [[None for _ in range(7)] for _ in range(7)]
 
 
 def fastcopy(item):
@@ -422,12 +426,12 @@ class FourCityGame(object):
                         'remaining_tiles',
                         'player_count',
                         'current_round',
-                        'winner'])
+                        'winner',
+                        'scores'])
 
     @classmethod
     def initial_state(cls, players):
-        return cls.State(construction_site=[[None for _ in range(7)]
-                                            for _ in range(7)],
+        return cls.State(construction_site=clear_construction_site(),
                          city_boards=[[[None for _ in range(4)]
                                        for _ in range(4)]
                                       for _ in range(players)],
@@ -445,7 +449,8 @@ class FourCityGame(object):
                          remaining_tiles=None,
                          player_count=players,
                          current_round=0,
-                         winner=None)
+                         winner=None,
+                         scores=None)
 
     @classmethod
     def apply_move(cls, state, move):
@@ -463,6 +468,7 @@ class FourCityGame(object):
         remaining_tiles = state.remaining_tiles
         current_round = state.current_round
         winner = None
+        scores = None
 
         if move not in cls.get_moves(state)[1]:
             raise ValueError('Invalid move')
@@ -527,9 +533,10 @@ class FourCityGame(object):
                         people=people_by_player[player],
                         energy=energy_by_player[player])
                     scores.append((score, tb1, tb2, player))
-                winner_score = sorted(scores, reverse=True)[0]
-                winner = [winner_score[3]] + list(winner_score)[:-1]
+                winner = sorted(scores, reverse=True)[0][3]
+                scores = [_[:3] for _ in scores]
             else:
+                construction_site = clear_construction_site()
                 architects_by_player = reset_architects(state.player_count)
                 current_round += 1
                 construction_site, remaining_tiles = (
@@ -552,7 +559,8 @@ class FourCityGame(object):
                               architects_by_player=architects_by_player,
                               remaining_tiles=remaining_tiles,
                               current_round=current_round,
-                              winner=winner)
+                              winner=winner,
+                              scores=scores)
 
     @staticmethod
     def get_moves(state):
@@ -592,8 +600,32 @@ class FourCityGame(object):
 
     @staticmethod
     def get_winner(state):
-        return state.winner and state.winner[0]
+        return state.winner
 
     @staticmethod
     def current_player(state):
         return state.current_player
+
+    @staticmethod
+    def update_misc(end_state, misc_by_player):
+        high_score = end_state.scores[end_state.winner][0]
+        runner_up_score = sorted(end_state.scores, reverse=True)[1][0]
+
+        for player, score in enumerate(end_state.scores):
+            if end_state.scores[player][0] == high_score:
+                score_diff = high_score - runner_up_score
+            else:
+                score_diff = score[0] - high_score
+
+            if 'score_diffs' not in misc_by_player[player]:
+                misc_by_player[player] = {
+                    'score_diffs': [],
+                    'avg_score_diff': 0,
+                }
+
+            misc = misc_by_player[player]
+            score_diffs = misc['score_diffs']
+            score_diffs.append(score_diff)
+
+            misc.update({'avg_score_diff': (float(sum(score_diffs)) /
+                                            len(score_diffs))})

@@ -1,3 +1,4 @@
+from math import sqrt, log
 import unittest
 
 from mittmcts import MCTS
@@ -6,7 +7,7 @@ from test.fourcity import (
     valid_purchases, valid_builds, tiles,
     tile_for_player_count, Park, Tower, score_board,
     Shop, Factory, Harbor, Service, THROW_OUT, find_best_resource_allocation,
-    FourCityGame, get_tile_architect_points_at, populate_construction_site
+    FourCityGame, get_tile_architect_points_at, populate_construction_site,
 )
 
 
@@ -297,31 +298,72 @@ class TestFourCityGame(unittest.TestCase):
         heights[0][0] = 1
         heights[0][2] = 4
 
-        self.assertEqual(find_best_resource_allocation(board, heights,
+        self.assertEqual(find_best_resource_allocation(board,
+                                                       heights,
                                                        people=0,
                                                        energy=1),
                          (12, 0, 2))
 
-        self.assertEqual(find_best_resource_allocation(board, heights,
+        self.assertEqual(find_best_resource_allocation(board,
+                                                       heights,
                                                        people=0,
                                                        energy=2),
                          (15, 0, 3))
 
         # the park will absorb the pollution
-        self.assertEqual(find_best_resource_allocation(board, heights,
+        self.assertEqual(find_best_resource_allocation(board,
+                                                       heights,
                                                        people=0,
                                                        energy=3),
                          (15, 0, 3))
 
         # when there is no place to put the energy it takes away points
-        self.assertEqual(find_best_resource_allocation(board, heights,
+        self.assertEqual(find_best_resource_allocation(board,
+                                                       heights,
                                                        people=0,
                                                        energy=4),
                          (14, 0, 3))
 
+        heights = [[0] * 4 for _ in range(4)]
+        board = [
+            [______, Shop(), ______, ______],
+            [______, ______, ______, ______],
+            [______, ______, ______, ______],
+            [______, ______, ______, ______],
+        ]
+
+        self.assertEqual(find_best_resource_allocation(board,
+                                                       heights,
+                                                       people=4,
+                                                       energy=1),
+                         (7, 0, 1))
+
     def test_with_mcts(self):
         state = FourCityGame.initial_state(2)
-        result = (MCTS(FourCityGame, state)
-                  .get_simulation_result(10, get_leaf_nodes=True))
-        for leaf_node in result.leaf_nodes:
-            print(leaf_node)
+
+        def by_score(node, player):
+            if not node.parent:
+                return 0
+            avg_score_diff = (node.misc_by_player
+                              .get(player, {})
+                              .get('avg_score_diff', 0))
+            try:
+                ucb = (
+                    (float(avg_score_diff) / node.visits) +
+                    (node.c * sqrt(log(node.parent.visits) / node.visits)))
+            except ZeroDivisionError:
+                ucb = 0
+            return ucb
+
+        state = FourCityGame.determine(state)
+
+        while state.winner is None:
+            result = (MCTS(FourCityGame,
+                           state,
+                           evaluation_function=by_score,
+                           c=0.5)
+                      .get_simulation_result(1))
+            state = FourCityGame.apply_move(state, result.move)
+
+        node = [c for c in result.root.children if c.move == result.move][0]
+        print(node)
