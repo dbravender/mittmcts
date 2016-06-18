@@ -238,19 +238,19 @@ class EuchreGame(object):
         for player in range(4):
             if state.hands[player]:
                 for card_index, card in enumerate(state.hands[player]):
-                    problem.addVariable('p{}{}'.format(player, card_index),
+                    problem.addVariable((player, card_index),
                                         [card])
             else:
                 voids_by_player = state.voids_by_player[player]
                 for card_index in range(hand_size_by_player[player]):
-                    variable_name = 'p{}{}'.format(player, card_index)
                     if voids_by_player:
                         potential_cards = potential_cards_given_voids(
                             state.trump, voids_by_player, cards)
                         shuffle(potential_cards)
-                        problem.addVariable(variable_name, potential_cards)
+                        problem.addVariable((player, card_index),
+                                            potential_cards)
                     else:
-                        problem.addVariable(variable_name, cards)
+                        problem.addVariable((player, card_index), cards)
         problem.addConstraint(AllDifferentConstraint())
 
         cards = sorted(iteritems(problem.getSolution()))
