@@ -2,7 +2,7 @@ from collections import defaultdict, namedtuple, Counter
 from copy import deepcopy
 
 from math import sqrt, log
-from random import choice, random
+from random import choice
 
 from six import iteritems
 
@@ -13,7 +13,13 @@ Draw = Draw()
 
 
 class Node(object):
-    def __init__(self, game, state, parent, move, c, depth=0):
+    def __init__(self, game, state, parent, move, c, depth=0,
+                 determined=False):
+        self.__slots__ = ('parent', '__state', '__initial_state', '__children',
+                          'game', 'move', 'visits', 'draws', 'wins_by_player',
+                          'misc_by_player', 'c', 'depth', 'determined',
+                          'unvisited_children', 'played_moves',
+                          'determined_unvisited_children')
         self.parent = parent
         self.__state = state
         if parent is None:
@@ -25,9 +31,12 @@ class Node(object):
         self.draws = 0
         self.wins_by_player = defaultdict(lambda: 0)
         self.misc_by_player = defaultdict(dict)
-        self.impossible_state = False
         self.c = c
         self.depth = depth
+        self.determined = determined
+        self.determined_unvisited_children = []
+        self.unvisited_children = []
+        self.played_moves = []
 
     def ucb1(self, player):
         if not self.parent:
@@ -55,24 +64,32 @@ class Node(object):
         # if games implement a determine classmethod then we are
         # doing ISMCTS so we randomly pick the hidden state every time
         # we play out
-        if hasattr(self.game, 'determine'):
-            self.__state = self.game.determine(self.__initial_state)
-
-    def add_new_children_for_determination(self, moves):
-        self.__children.update({move: Node(game=self.game,
-                                           state=None,
-                                           move=move,
-                                           parent=self,
-                                           c=self.c,
-                                           depth=self.depth + 1)
-                                for move in moves
-                                if move not in self.__children})
+        self.__state = self.game.determine(self.__initial_state)
 
     @property
     def children(self):
+        if not self.determined and self.__children:
+            return self.__children
         is_random, moves = self.game.get_moves(self.state)
         self.is_random = is_random
-        self.add_new_children_for_determination(moves)
+        new_children = {move: Node(game=self.game,
+                                   state=None,
+                                   move=move,
+                                   parent=self,
+                                   c=self.c,
+                                   depth=self.depth + 1,
+                                   determined=self.determined)
+                        for move in moves
+                        if move not in self.__children}
+        self.unvisited_children.extend(new_children.values())
+        if not self.determined:
+            self.determined_unvisited_children = self.unvisited_children
+            self.__children = list(new_children.values())
+            return self.__children
+        self.__children.update(new_children)
+        self.determined_unvisited_children = [
+            child for child in self.unvisited_children
+            if child.move in moves]
         return [child for move, child in iteritems(self.__children)
                 if move in moves]
 
@@ -88,11 +105,16 @@ class Node(object):
             return choice(children)
 
         # visit unplayed moves first
+
+        if self.determined_unvisited_children:
+            child = choice(self.determined_unvisited_children)
+            self.determined_unvisited_children.remove(child)
+            return child
+
         # if all moves have been visited then visit the move with the highest
         # ucb1 payout
-        children = sorted(children,
-                          key=lambda c: (c.visits == 0 and random() or -1,
-                                         c.ucb1(self.current_player)))
+
+        children = sorted(children, key=lambda c: c.ucb1(self.current_player))
         return children[-1]
 
     @property
@@ -165,20 +187,22 @@ class MCTS(object):
                               iterations=1,
                               actual_options=None,
                               get_leaf_nodes=False):
+        determined = hasattr(self.game, 'determine')
         root_node = Node(game=self.game,
                          parent=None,
                          state=self.__initial_state,
                          move=None,
-                         c=self.c)
+                         c=self.c,
+                         determined=determined)
         MCTSResult = namedtuple('MCTSResult', 'root, move, leaf_nodes,'
                                               'max_depth, avg_depth')
         plays = 0
         max_depth = 0
         total_depth = 0
         leaf_nodes = []
-        determined = hasattr(self.game, 'determine')
         while plays < iterations:
-            root_node.determine()
+            if determined:
+                root_node.determine()
             current_node = root_node
             while current_node.winner is None and current_node.children:
                 current_node = current_node.get_best_child()
