@@ -4,7 +4,7 @@ from distutils.core import setup
 
 setup(
     name='mittmcts',
-    version='0.1',
+    version='0.2',
     description='Man in the Table Information Set Monte Carlo Tree Search '
                 'library',
     author='Dan Bravender',
