@@ -10,6 +10,8 @@ from six import iteritems
 
 class Draw(object):
     pass
+
+
 Draw = Draw()
 
 
