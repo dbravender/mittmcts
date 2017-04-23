@@ -1,3 +1,4 @@
+from time import time
 import unittest
 
 from mittmcts import MCTS
@@ -91,6 +92,8 @@ class TestConnectFour(unittest.TestCase):
             current_player=0,
             bitboards=get_bitboards(board),
             winner=None)
+        start_time = time()
         result = (MCTS(ConnectFourGame, state)
-                  .get_simulation_result(100))
+                  .get_simulation_result(max_seconds=1))
+        self.assertGreater(time() - start_time, 1)
         self.assertIn(result.move, [1, 5])

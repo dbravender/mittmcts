@@ -1,5 +1,6 @@
 from collections import defaultdict, namedtuple, Counter
 from copy import deepcopy
+from time import time
 
 from math import sqrt, log
 from random import choice, random
@@ -164,7 +165,8 @@ class MCTS(object):
     def get_simulation_result(self,
                               iterations=1,
                               actual_options=None,
-                              get_leaf_nodes=False):
+                              get_leaf_nodes=False,
+                              max_seconds=None):
         root_node = Node(game=self.game,
                          parent=None,
                          state=self.__initial_state,
@@ -172,12 +174,17 @@ class MCTS(object):
                          c=self.c)
         MCTSResult = namedtuple('MCTSResult', 'root, move, leaf_nodes,'
                                               'max_depth, avg_depth')
+        if max_seconds:
+            iterations = float('inf')
         plays = 0
         max_depth = 0
         total_depth = 0
         leaf_nodes = []
         determined = hasattr(self.game, 'determine')
+        start_time = time()
         while plays < iterations:
+            if max_seconds is not None and time() - start_time > max_seconds:
+                break
             root_node.determine()
             current_node = root_node
             while current_node.winner is None and current_node.children:
